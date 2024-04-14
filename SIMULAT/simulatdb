@@ -1,0 +1,212 @@
+
+CREATE TABLE Assignment
+(
+  assignment_id      INT AUTO_INCREMENT NOT NULL,
+  content_id         INT                NOT NULL,
+  assignment_title   VARCHAR(255)       NOT NULL,
+  description        TEXT               NOT NULL,
+  deadline           DATE               NOT NULL,
+  max_score          INT                NOT NULL,
+  file_url           VARCHAR(255)       NOT NULL,
+  grading_criteria   TEXT               NULL    ,
+  instructions       TEXT               NOT NULL,
+  submission_format  VARCHAR(255)       NOT NULL,
+  is_published       BOOLEAN            NOT NULL DEFAULT false,
+  created_at         TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (assignment_id)
+);
+
+CREATE TABLE AssignmentScore 
+(
+  assignment_score_id   INT AUTO_INCREMENT NOT NULL,
+  score                INT                 NOT NULL,
+  submission_date      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  assignment_id        INT AUTO_INCREMENT  NOT NULL,
+  student_id           INT AUTO_INCREMENT  NOT NULL,
+  PRIMARY KEY (assignment_score_id )
+);
+
+CREATE TABLE Content
+(
+  content_id           INT          NOT NULL,
+  course_id            INT          NOT NULL,
+  content_type         VARCHAR(50)  NOT NULL COMMENT 'Assignment, Quiz, Daily Challenge, etc.',
+  content_title        VARCHAR(255) NOT NULL,
+  content_description  TEXT         NOT NULL,
+  content_url          VARCHAR(255) NOT NULL COMMENT 'Store the URL or path to the PDF file',
+  created_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (content_id )
+) COMMENT 'Assignment, Quiz, Daily Challenge, Lectures.';
+
+CREATE TABLE Course
+(
+  course_id      INT          NOT NULL,
+  course_code    VARCHAR(20)  NOT NULL,
+  course_name    VARCHAR(255) NOT NULL,
+  description    TEXT         NOT NULL,
+  start_date     DATE         NOT NULL,
+  end_date       DATE         NOT NULL,
+  instructor_id  VARCHAR(20)  NOT NULL,
+  is_published   BOOLEAN      NOT NULL DEFAULT false,
+  created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (course_id)
+) COMMENT '..';
+
+CREATE TABLE Course Enrollment
+(
+  enrollment_id                       NOT NULL,
+  enrollment_date                     NULL    ,
+  course_id        INT                NOT NULL,
+  student_id       INT AUTO_INCREMENT NOT NULL,
+  PRIMARY KEY (enrollment_id )
+) COMMENT 'For multiple courses';
+
+CREATE TABLE DailyChallenge 
+(
+  challenge_id  INT AUTO_INCREMENT NOT NULL,
+  content_id    INT                NOT NULL,
+  date          DATE               NOT NULL,
+  is_published  BOOLEAN            NOT NULL DEFAULT false,
+  created_at    TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (challenge_id )
+);
+
+CREATE TABLE DailyChallengeScore 
+(
+  challenge_score_id  INT AUTO_INCREMENT NOT NULL,
+  score               INT                NOT NULL,
+  submission_date     TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  challenge_id        INT AUTO_INCREMENT NOT NULL,
+  student_id          INT AUTO_INCREMENT NOT NULL,
+  PRIMARY KEY (challenge_score_id )
+);
+
+CREATE TABLE Instructor 
+(
+  instructor_id  VARCHAR(20) NOT NULL,
+  given_name                 NULL    ,
+  middle_name                NULL    ,
+  surname                    NULL    ,
+  date_of_birth              NULL    ,
+  gender                     NULL    ,
+  PRIMARY KEY (instructor_id )
+);
+
+CREATE TABLE LessonMaterial  
+(
+  material_id     INT  AUTO_INCREMENT NOT NULL,
+  content_id      INT                 NOT NULL,
+  material_title  VARCHAR(255)        NOT NULL,
+  description     TEXT                NOT NULL,
+  material_url    VARCHAR(255)        NOT NULL,
+  created_at      TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Quiz 
+(
+  quiz_id       INT AUTO_INCREMENT NOT NULL,
+  content_id    INT                NOT NULL,
+  quiz_title    VARCHAR(255)       NOT NULL,
+  description   TEXT               NOT NULL,
+  time_limit    INT                NOT NULL,
+  is_published  BOOLEAN            NOT NULL DEFAULT false,
+  created_at    TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,,
+  PRIMARY KEY (quiz_id )
+);
+
+CREATE TABLE QuizScore 
+(
+  quiz_score_id    INT AUTO_INCREMENT NOT NULL,
+  score            INT                NOT NULL,
+  submission_date  TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  quiz_id          INT AUTO_INCREMENT NOT NULL,
+  student_id       INT AUTO_INCREMENT NOT NULL,
+  PRIMARY KEY (quiz_score_id )
+);
+
+CREATE TABLE Student
+(
+  student_id      INT AUTO_INCREMENT NOT NULL,
+  token_id        VARCHAR(250)       NOT NULL,
+  given_name      VARCHAR(11)        NOT NULL,
+  middle_name     VARCHAR(11)        NOT NULL,
+  surname         VARCHAR(11)        NOT NULL,
+  date_of_birth   DATE               NOT NULL,
+  gender          VARCHAR(11)        NOT NULL,
+  enrollment_date DATE               NOT NULL,
+  PRIMARY KEY (student_id)
+) COMMENT 'Inside Simulat';
+
+ALTER TABLE Course Enrollment
+  ADD CONSTRAINT FK_Course_TO_Course Enrollment
+    FOREIGN KEY (course_id)
+    REFERENCES Course (course_id);
+
+ALTER TABLE Course Enrollment
+  ADD CONSTRAINT FK_Student_TO_Course Enrollment
+    FOREIGN KEY (student_id)
+    REFERENCES Student (student_id);
+
+ALTER TABLE Content
+  ADD CONSTRAINT FK_Course_TO_Content
+    FOREIGN KEY (course_id)
+    REFERENCES Course (course_id);
+
+ALTER TABLE Course
+  ADD CONSTRAINT FK_Instructor _TO_Course
+    FOREIGN KEY (instructor_id )
+    REFERENCES Instructor  (instructor_id );
+
+ALTER TABLE Assignment
+  ADD CONSTRAINT FK_Content_TO_Assignment
+    FOREIGN KEY (content_id )
+    REFERENCES Content (content_id );
+
+ALTER TABLE Quiz 
+  ADD CONSTRAINT FK_Content_TO_Quiz 
+    FOREIGN KEY (content_id )
+    REFERENCES Content (content_id );
+
+ALTER TABLE LessonMaterial  
+  ADD CONSTRAINT FK_Content_TO_LessonMaterial  
+    FOREIGN KEY (content_id )
+    REFERENCES Content (content_id );
+
+ALTER TABLE DailyChallenge 
+  ADD CONSTRAINT FK_Content_TO_DailyChallenge 
+    FOREIGN KEY (content_id )
+    REFERENCES Content (content_id );
+
+ALTER TABLE QuizScore 
+  ADD CONSTRAINT FK_Quiz _TO_QuizScore 
+    FOREIGN KEY (quiz_id )
+    REFERENCES Quiz  (quiz_id );
+
+ALTER TABLE QuizScore 
+  ADD CONSTRAINT FK_Student_TO_QuizScore 
+    FOREIGN KEY (student_id)
+    REFERENCES Student (student_id);
+
+ALTER TABLE AssignmentScore 
+  ADD CONSTRAINT FK_Assignment_TO_AssignmentScore 
+    FOREIGN KEY (assignment_id)
+    REFERENCES Assignment (assignment_id);
+
+ALTER TABLE AssignmentScore 
+  ADD CONSTRAINT FK_Student_TO_AssignmentScore 
+    FOREIGN KEY (student_id)
+    REFERENCES Student (student_id);
+
+ALTER TABLE DailyChallengeScore 
+  ADD CONSTRAINT FK_DailyChallenge _TO_DailyChallengeScore 
+    FOREIGN KEY (challenge_id )
+    REFERENCES DailyChallenge  (challenge_id );
+
+ALTER TABLE DailyChallengeScore 
+  ADD CONSTRAINT FK_Student_TO_DailyChallengeScore 
+    FOREIGN KEY (student_id)
+    REFERENCES Student (student_id);
