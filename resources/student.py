@@ -17,10 +17,7 @@ session = Session()
 metadata = MetaData()
 students_table = Table('student', metadata, autoload_with=engine)
 
-
-
-
-
+# used to serialize data into non-python form for reading in JSON form
 class StudentSchema(Schema):
         given_name= fields.Str()
         middle_name= fields.Str()
@@ -31,23 +28,13 @@ class StudentSchema(Schema):
         student_id=fields.Int()
         token_id=fields.Int()
 
-
-
-
-
-class StudentModel:
-    def __init__(self, dob=None, gender=None, enrollment_date=None, student_id=None, name=None, token_id=None):
-        self.dob = dob
-        self.gender = gender
-        self.enrollment_date = enrollment_date
-        self.id = student_id
-        self.name = name
-        self.token_id = token_id
-
 # Resource class
 class Student(Resource):
     def __init__(self):
         super().__init__()
+
+        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
+        # SIMPLY ADD ALL DB PARAMETERS
 
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("given_name", type=str, help="Given Name of Student")
@@ -59,6 +46,7 @@ class Student(Resource):
         self.parser.add_argument("token_id", type=str, help="Enrollment date of Student")
 
 
+    # basic GET request 
     def get(self, student_id):
         stmt = select(students_table).where(students_table.c.student_id == student_id)
         result = session.execute(stmt).fetchone()
@@ -72,6 +60,7 @@ class Student(Resource):
         else:
             abort(404, message="Student not found")
 
+    # Unknown if Flask-Restful has support for POST rquest
     def put(self, student_id):
         args = self.parser.parse_args()
 
@@ -89,6 +78,10 @@ class Student(Resource):
             middle_name=args['middle_name'],
             surname=args['surname'],
             gender=args['gender'],
+
+            
+            # Careful around dates; they need to be formatted dd-mm-YYYY according to db
+
             date_of_birth=parse_date(args['date_of_birth'], '%d-%m-%Y').date(),
             enrollment_date=parse_date(args['enrollment_date'], '%d-%m-%Y').date(),
             token_id=args['token_id']
