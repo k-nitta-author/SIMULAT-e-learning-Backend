@@ -39,9 +39,9 @@ class DailyChallenge(Resource):
 
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("content_id", type=int, help="Given Name of Student")
-        self.parser.add_argument("date", type=int, help="Given Name of Student")
+        self.parser.add_argument("date", type=str, help="Given Name of Student")
         self.parser.add_argument("is_published", type=int, help="DOB of Student")
-        self.parser.add_argument("created_at", type=int, help="Gender of Student")
+        self.parser.add_argument("created_at", type=str, help="Gender of Student")
         self.parser.add_argument("updated_at", type=str, help="Gender of Student")
 
     # basic GET request 

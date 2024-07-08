@@ -13,11 +13,8 @@ engine = create_engine(connection_string)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 metadata = MetaData()
 table = Table('courseenrollment', metadata, autoload_with=engine)
-
-
 
 # used to serialize data into non-python form for reading in JSON form
 # see student.py for an example of proper class design. 

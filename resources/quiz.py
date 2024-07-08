@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort
+from flask_restful import Resource, reqparse, abort
 from sqlalchemy import create_engine, Table, MetaData, select
 from sqlalchemy.orm import sessionmaker
 from config import connection_string
@@ -41,11 +41,11 @@ class Quiz(Resource):
 
         self.parser = reqparse.RequestParser()
         self.parser.add_argument("content_id", type=int, help="Given Name of Student")
-        self.parser.add_argument("quiz_title", type=int, help="Given Name of Student")
+        self.parser.add_argument("quiz_title", type=str, help="Given Name of Student")
         self.parser.add_argument("description", type=str, help="Middle Name of Student")
-        self.parser.add_argument("time_limit", type=str, help="Surname of Student")
+        self.parser.add_argument("time_limit", type=int, help="Surname of Student")
         self.parser.add_argument("is_published", type=int, help="DOB of Student")
-        self.parser.add_argument("created_at", type=int, help="Gender of Student")
+        self.parser.add_argument("created_at", type=str, help="Gender of Student")
         self.parser.add_argument("updated_at", type=str, help="Gender of Student")
 
     # basic GET request 
@@ -68,11 +68,11 @@ class Quiz(Resource):
         else:
             abort(404, message="Student not found")
 
-    def put(self, instructor_id):
+    def put(self, quiz_id):
         args = self.parser.parse_args()
 
         # Check if the instructor already exists
-        stmt = select(table).where(table.c.instructor_id == instructor_id)
+        stmt = select(table).where(table.c.quiz_id == quiz_id)
 
         
 
@@ -80,20 +80,19 @@ class Quiz(Resource):
 
         if result:
             # Update the existing student
-            stmt = table.update().where(table.c.instructor_id == instructor_id).values(
-            given_name=args['given_name'],
-            middle_name=args['middle_name'],
-            surname=args['surname'],
-            gender=args['gender'],
+            stmt = table.update().where(table.c.quiz_id == quiz_id).values(
+            content_id=args['content_id'],
+            quiz_title=args['quiz_title'],
+            description=args['description'],
+            time_limit=args['time_limit'],
+            is_published=args['is_published'],
+            created_at=args['created_at'],
+            updated_at=args['updated_at']
 
-            
-            # Careful around dates; they need to be formatted dd-mm-YYYY according to db
-
-            date_of_birth=parse_date(args['date_of_birth'], '%d-%m-%Y').date(),
             )
             session.execute(stmt)
             session.commit()
-            return {instructor_id: args}, 200
+            return {quiz_id: args}, 200
         else:
 
             parse_date = datetime.strptime
@@ -101,22 +100,21 @@ class Quiz(Resource):
 
             # Insert a new instructor
             stmt = table.insert().values(
-            instructor_id=instructor_id,
-            given_name=args['given_name'],
-            middle_name=args['middle_name'],
-            surname=args['surname'],
-            gender=args['gender'],
-            
-
-            date_of_birth=parse_date(args['date_of_birth'], '%d-%m-%Y').date(),
+            content_id=args['content_id'],
+            quiz_title=args['quiz_title'],
+            description=args['description'],
+            time_limit=args['time_limit'],
+            is_published=args['is_published'],
+            created_at=args['created_at'],
+            updated_at=args['updated_at']
             )
             session.execute(stmt)
             session.commit()
-            return {instructor_id: args}, 201
+            return {quiz_id: args}, 201
 
-    def delete(self, instructor_id):
+    def delete(self, quiz_id):
 
-        stmt = table.delete().where(table.c.instructor_id == instructor_id)
+        stmt = table.delete().where(table.c.quiz_id == quiz_id)
         session.execute(stmt)
         session.commit()
         return '', 204

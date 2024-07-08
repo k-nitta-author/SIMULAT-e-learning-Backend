@@ -29,9 +29,7 @@ class AssignmentSchema(Schema):
         grading_criteria= fields.Str()
         instructions=fields.Str()
         created_at=fields.Str()
-        instructions=fields.Str()
         submission_format=fields.Str()
-        created_at=fields.Str()
         updated_at=fields.Str()
 
 # resource class

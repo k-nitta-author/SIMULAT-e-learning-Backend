@@ -26,7 +26,7 @@ class DailyChallengeScoreSchema(Schema):
         student_id=fields.Str()
 
 # resource class
-class DailyChallenge(Resource):
+class DailyChallengeScore(Resource):
 
     def __init__(self) -> None:
         super().__init__()

@@ -13,7 +13,6 @@ engine = create_engine(connection_string)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 metadata = MetaData()
 table = Table('assignmentscore', metadata, autoload_with=engine)
 
