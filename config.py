@@ -1,1 +1,1 @@
-connection_string = 'mysql://root:koolele@127.0.0.1:3306/simulatdb'
+connection_string = 'mysql://root:koolele@host.docker.internal:3306/simulatdb'
