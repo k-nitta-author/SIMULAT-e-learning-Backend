@@ -1,116 +1,103 @@
+from flask import jsonify, request
+from tables import LessonMaterial as table
+from setup import APP, SESSION
 from datetime import datetime
 
-from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort
-from sqlalchemy import create_engine, Table, MetaData
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
-from config import connection_string
-
-from marshmallow import Schema, fields
-
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-metadata = MetaData()
-table = Table('lessonmaterial', metadata, autoload_with=engine)
-
-# used to serialize data into non-python form for reading in JSON form
-# see student.py for an example of proper class design. 
-class LessonMaterialSchema(Schema):
-        content_id= fields.Int()
-        material_title= fields.Str()
-        description= fields.Str()
-        material_url=fields.Str()
-        created_at=fields.Str()
 
 # resource class
-class LessonMaterial(Resource):
+class LessonMaterialResource():
 
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.parser = reqparse.RequestParser()
-
-        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
-        # SIMPLY ADD ALL DB PARAMETERS
-        self.parser.add_argument('content_id', type=int, help="Given Name of course")
-        self.parser.add_argument('material_title', type=str, help="Given Name of course")
-        self.parser.add_argument('description', type=str, help="Given Name of course")
-        self.parser.add_argument('material_url', type=str, help="Given Name of course")
-        self.parser.add_argument('created_at', type=str, help="Given Name of course")
-
-    # basic GET request 
-    def get(self, material_id):
-
-        # select row from a table with a matching course id
-        # present a result by executing the sql statement 
-        stmt = select(table).where(table.c.material_id == material_id)
-        result = session.execute(stmt).fetchone()
-
-        print(result._mapping)
-
-        # instantiate schema and serialize the data
-        schema =LessonMaterialSchema()
-        dump = schema.dump(result._mapping)
+    @APP.route('/lessons', methods=['GET'])
+    def get_all_lesson_material():
 
 
-        # if row is not empty, return accessed data
-        # abort and return a 404 if there is no student
-        if result:
-            return dump, 200
-        else:
-            abort(404, message="Course not found")
+        result = SESSION.query(table).all()
 
-    def put(self, material_id):
-        args = self.parser.parse_args()
 
-        # Check if the instructor already exists
-        stmt = select(table).where(table.c.material_id == material_id)
+        output = []
 
+        for item in result:
+            print(item)
+
+            item_data = {
+
+                "content_id": item.content_id,
+                "material_title": item.material_title,
+                "description": item.description,
+                "material_url": item.material_url,
+                "created_at": item.created_at,
+
+            }
+
+
+            output.append(item_data)
+
+        return jsonify(output)
+    
+    @APP.route('/lessons/<id>', methods=['GET'])
+    def get_by_id_lesson_material(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        item_data = {
+
+                "content_id": item.content_id,
+                "material_title": item.material_title,
+                "description": item.description,
+                "material_url": item.material_url,
+                "created_at": item.created_at,
+
+            }
+
+
+        return jsonify(item_data)
+    
+    @APP.route('/lessons', methods=['POST'])
+    def create_lesson_material():
+
+        data = request.get_json()
+
+        q = table()
+
+        q.content_id= data["content_id"]
+        q.material_title= data["material_title"]
+        q.description= data["description"]
+        q.material_url= data["material_url"]
+        q.created_at= datetime.now()
+
+        SESSION.add(q)
+        SESSION.commit()
+
+        return jsonify({"message": "user_created"})
+    
+    @APP.route('/lesson_material/<id>', methods=['DELETE'])
+    def delete_lesson_material(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        SESSION.delete(item)
+        SESSION.commit()
         
+        return jsonify({"message": "user_deleted"})
+    
+    @APP.route('/lesson_material/<id>', methods=['PUT'])
+    def update_lesson_material(id):
 
-        result = session.execute(stmt).fetchone()
+        data = request.get_json()
 
-        if result:
-            # Update the existing student            
-            
-            stmt = table.update().where(table.c.material_id == material_id).values(
-            
-            content_id=args['content_id'],
-            material_title=args['material_title'],
-            description=args['description'],
-            material_url=args['material_url'],
-            created_at=args['created_at']
+        q = SESSION.query(table).filter(table.id == id).first()
 
-
-
-            )
-            session.execute(stmt)
-            session.commit()
-            return {material_id: args}, 200
-        else:
+        q.content_id= data["content_id"]
+        q.material_title= data["material_title"]
+        q.description= data["description"]
+        q.material_url= data["material_url"]
         
+        SESSION.add(q)
+        SESSION.commit()
 
-            # Insert a new instructor
-            stmt = table.insert().values(
-
-            content_id=args['content_id'],
-            material_title=args['material_title'],
-            description=args['description'],
-            material_url=args['material_url'],
-            created_at=args['created_at']
-
-            )
-            session.execute(stmt)
-            session.commit()
-            return {material_id: args}, 201
-
-    def delete(self, material_id):
-
-        stmt = table.delete().where(table.c.material_id == material_id)
-        session.execute(stmt)
-        session.commit()
-        return '', 204
+        return jsonify({"message":"user updated"})
+    

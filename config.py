@@ -1,1 +1,3 @@
-connection_string = 'mysql://root:koolele@host.docker.internal:3306/simulatdb'
+connection_string = 'mysql://root:koolele@localhost:3306/simulatdb'
+
+secret_key = 'SECRET'

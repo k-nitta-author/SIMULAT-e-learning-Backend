@@ -1,114 +1,106 @@
+from flask import jsonify, request
+from tables import Content as table
+from setup import APP, SESSION
 from datetime import datetime
 
-from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort
-from sqlalchemy import create_engine, Table, MetaData
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
-from config import connection_string
-
-from marshmallow import Schema, fields
-
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-metadata = MetaData()
-table = Table('content', metadata, autoload_with=engine)
-
-# used to serialize data into non-python form for reading in JSON form
-# see student.py for an example of proper class design. 
-class ContentSchema(Schema):
-        course_id= fields.Int()
-        content_type= fields.Str()
-        content_title= fields.Str()
-        content_description= fields.Str()
-        content_url=fields.Str()
-        created_at=fields.Str()
-
 # resource class
-class Content(Resource):
+class ContentResource():
 
-    def __init__(self) -> None:
-        super().__init__()
+    @APP.route('/content', methods=['GET'])
+    def get_all_content():
 
-        self.parser = reqparse.RequestParser()
+        result = SESSION.query(table).all()
 
-        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
-        # SIMPLY ADD ALL DB PARAMETERS
-        self.parser.add_argument('content_id', type=int, help="Given Name of course")
-        self.parser.add_argument('course_id', type=int, help="Given Name of course")
-        self.parser.add_argument('content_type', type=str, help="Given Name of course")
-        self.parser.add_argument("content_title", type=str, help="desc of course")
-        self.parser.add_argument("content_description", type=str, help="starting date of course")
-        self.parser.add_argument("content_url", type=str, help="Surname of Student")
-        self.parser.add_argument("created_at", type=str, help="")
+        output = []
 
-    # basic GET request 
-    def get(self, content_id):
+        for item in result:
+            print(item)
 
-        # select row from a table with a matching course id
-        # present a result by executing the sql statement 
-        stmt = select(table).where(table.c.content_id == content_id)
-        result = session.execute(stmt).fetchone()
+            item_data = {
 
-        print(result._mapping)
+                "id": item.id,
+                "course_id": item.course_id,
+                "content_type": item.content_type,
+                "content_title": item.content_title,
+                "content_description": item.content_description,
+                "content_url": item.content_url,
+                "created_at": item.created_at,
 
-        # instantiate schema and serialize the data
-        schema =ContentSchema()
+            }
 
-        # if row is not empty, return accessed data
-        # abort and return a 404 if there is no student
-        if result:
-            return schema.dump(result._mapping), 200
-        else:
-            abort(404, message="Course not found")
 
-    def put(self, content_id):
-        args = self.parser.parse_args()
+            output.append(item_data)
 
-        # Check if the instructor already exists
-        stmt = select(table).where(table.c.content_id == content_id)
+        return jsonify(output)
+    
+    @APP.route('/content/<id>', methods=['GET'])
+    def get_by_id_content(id):
 
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        item_data = {
+
+                "id": item.id,
+                "course_id": item.course_id,
+                "content_type": item.content_type,
+                "content_title": item.content_title,
+                "content_description": item.content_description,
+                "content_url": item.content_url,
+                "created_at": item.created_at,
+            }
+
+
+        return jsonify(item_data)
+    
+    @APP.route('/content', methods=['POST'])
+    def create_content():
+
+        data = request.get_json()
+
+        q = table()
+
+        q.course_id = data["course_id"]
+        q.content_type = data["content_type"]
+        q.content_title = data["content_title"]
+        q.content_description = data["content_description"]
+        q.content_url = data["content_url"]
+        q.created_at = datetime.now()
         
+        SESSION.add(q)
+        SESSION.commit()
 
-        result = session.execute(stmt).fetchone()
+        return jsonify({"message": "user_created"})
+    
+    @APP.route('/content/<id>', methods=['DELETE'])
+    def delete_content(id):
 
-        if result:
-            # Update the existing student      
-            # 
-            stmt = table.update().where(table.c.content_id == content_id).values(
-            course_id=args['course_id'],
-            content_type=args['content_type'],
-            content_title=args['content_title'],
-            content_description=args['content_description'],
-            content_url=args['content_url'],
-            created_at=args['created_at']
-            )
-            session.execute(stmt)
-            session.commit()
-            return {content_id: args}, 200
-        else:
-        
+        item = SESSION.query(table).filter(table.id == id).first()
 
-            # Insert a new instructor
-            stmt = table.insert().values(
-            course_id=args['course_id'],
-            content_type=args['content_type'],
-            content_title=args['content_title'],
-            content_description=args['content_description'],
-            content_url=args['content_url'],
-            created_at=args['created_at']
+        if not item: return jsonify({"Message":"No User by ID"}), 404
 
-            )
-            session.execute(stmt)
-            session.commit()
-            return {content_id: args}, 201
+        SESSION.delete(item)
+        SESSION.commit()
 
-    def delete(self, content_id):
+        return jsonify({"message": "user_deleted"})
+    
+    @APP.route('/content/<id>', methods=['PUT'])
+    def update_content(id):
 
-        stmt = table.delete().where(table.c.content_id == content_id)
-        session.execute(stmt)
-        session.commit()
-        return '', 204
+        data = request.get_json()
+
+        q = SESSION.query(table).filter(table.id == id).first()
+
+        q.course_id = data["course_id"]
+        q.content_type = data["content_type"]
+        q.content_title = data["content_title"]
+        q.content_description = data["content_description"]
+        q.content_url = data["content_url"]
+        q.created_at = data["created_at"]
+
+        SESSION.add(q)
+        SESSION.commit()
+
+        return jsonify({"message":"user updated"})
+    

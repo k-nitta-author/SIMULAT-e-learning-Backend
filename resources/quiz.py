@@ -1,120 +1,116 @@
+from flask import jsonify, request
+from tables import Quiz as table
+from setup import APP, SESSION
 from datetime import datetime
 
-from flask import Flask
-from flask_restful import Resource, reqparse, abort
-from sqlalchemy import create_engine, Table, MetaData, select
-from sqlalchemy.orm import sessionmaker
-from config import connection_string
-
-from marshmallow import Schema, fields
-
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-metadata = MetaData()
-table = Table('quiz', metadata, autoload_with=engine)
-
-
-# used to serialize data into non-python form for reading in JSON form
-# see student.py for an example of proper class design. 
-class QuizSchema(Schema):
-        content_id= fields.Int()
-        quiz_title=fields.Str()
-        description=fields.Str()
-        time_limit=fields.Int()
-        is_published=fields.Int()
-        created_at=fields.Str()
-        updated_at=fields.Str()
-
 # resource class
-class Quiz(Resource):
+class QuizResource():
 
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.parser = reqparse.RequestParser()
-
-        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
-        # SIMPLY ADD ALL DB PARAMETERS
-
-        self.parser = reqparse.RequestParser()
-        self.parser.add_argument("content_id", type=int, help="Given Name of Student")
-        self.parser.add_argument("quiz_title", type=str, help="Given Name of Student")
-        self.parser.add_argument("description", type=str, help="Middle Name of Student")
-        self.parser.add_argument("time_limit", type=int, help="Surname of Student")
-        self.parser.add_argument("is_published", type=int, help="DOB of Student")
-        self.parser.add_argument("created_at", type=str, help="Gender of Student")
-        self.parser.add_argument("updated_at", type=str, help="Gender of Student")
-
-    # basic GET request 
-    def get(self, quiz_id):
-
-        # select row from a table with a matching instructor id
-        # present a result by executing the sql statement 
-        stmt = select(table).where(table.c.quiz_id == quiz_id)
-        result = session.execute(stmt).fetchone()
-
-        # instantiate schema and serialize the data
-        schema =QuizSchema()
-        dump = schema.dump(result._mapping)
+    @APP.route('/quiz', methods=['GET'])
+    def get_all_quiz():
 
 
-        # if row is not empty, return accessed data
-        # abort and return a 404 if there is no student
-        if result:
-            return dump, 200
-        else:
-            abort(404, message="Student not found")
+        result = SESSION.query(table).all()
 
-    def put(self, quiz_id):
-        args = self.parser.parse_args()
 
-        # Check if the instructor already exists
-        stmt = select(table).where(table.c.quiz_id == quiz_id)
+        output = []
+
+        for item in result:
+            print(item)
+
+            item_data = {
+
+                "id": item.id,
+                "content_id": item.content_id,
+                "quiz_title": item.quiz_title,
+                "quiz_title": item.quiz_title,
+                "description": item.description,
+                "time_limit": item.time_limit,
+                "is_published": item.is_published,
+
+            }
+
+            output.append(item_data)
+
+        return jsonify(output)
+    
+    @APP.route('/quiz/<id>', methods=['GET'])
+    def get_by_id_quiz(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        item_data = {
+
+                "id": item.id,
+                "content_id": item.content_id,
+                "quiz_title": item.quiz_title,
+                "quiz_title": item.quiz_title,
+                "description": item.description,
+                "time_limit": item.time_limit,
+                "is_published": item.is_published,
+            }
+
+
+        return jsonify(item_data)
+    
+    @APP.route('/quiz', methods=['POST'])
+    def create_quiz():
+
+        data = request.get_json()
+
+        q = table()
+
+        q.content_id = data["content_id"]
+        q.quiz_title = data["quiz_title"]
+        q.description = data["description"]
+        q.time_limit = data["time_limit"]
+        q.is_published = False
 
         
+        SESSION.add(q)
+        SESSION.commit()
 
-        result = session.execute(stmt).fetchone()
+        return jsonify({"message": "user_created"})
+    
+    @APP.route('/quiz/<id>', methods=['DELETE'])
+    def delete_quiz(id):
 
-        if result:
-            # Update the existing student
-            stmt = table.update().where(table.c.quiz_id == quiz_id).values(
-            content_id=args['content_id'],
-            quiz_title=args['quiz_title'],
-            description=args['description'],
-            time_limit=args['time_limit'],
-            is_published=args['is_published'],
-            created_at=args['created_at'],
-            updated_at=args['updated_at']
+        item = SESSION.query(table).filter(table.id == id).first()
 
-            )
-            session.execute(stmt)
-            session.commit()
-            return {quiz_id: args}, 200
-        else:
+        if not item: return jsonify({"Message":"No User by ID"}), 404
 
-            parse_date = datetime.strptime
+        SESSION.delete(item)
+        SESSION.commit()
+
+        return jsonify({"message": "user_deleted"})
+    
+    @APP.route('/quiz/<id>', methods=['PUT'])
+    def update_quiz(id):
+
+        data = request.get_json()
+
+        q = SESSION.query(table).filter(table.id == id).first()
+
+        q.content_id = data["content_id"]
+        q.quiz_title = data["quiz_title"]
+        q.description = data["description"]
+        q.time_limit = data["time_limit"]
+        q.is_published = data["is_published"]
         
+        SESSION.commit()
 
-            # Insert a new instructor
-            stmt = table.insert().values(
-            content_id=args['content_id'],
-            quiz_title=args['quiz_title'],
-            description=args['description'],
-            time_limit=args['time_limit'],
-            is_published=args['is_published'],
-            created_at=args['created_at'],
-            updated_at=args['updated_at']
-            )
-            session.execute(stmt)
-            session.commit()
-            return {quiz_id: args}, 201
+        return jsonify({"message":"user updated"})
+    
 
-    def delete(self, quiz_id):
+    @APP.route('/quiz/<id>/publish', methods=['PUT'])
+    def publish_quiz(id):
 
-        stmt = table.delete().where(table.c.quiz_id == quiz_id)
-        session.execute(stmt)
-        session.commit()
-        return '', 204
+        q = SESSION.query(table).filter(table.id == id).first()
+
+        q.is_published = True
+        
+        SESSION.commit()
+
+        return jsonify({"message":"user updated"})

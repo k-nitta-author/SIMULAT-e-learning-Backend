@@ -1,135 +1,137 @@
+from flask import jsonify, request
+
+from tables import AssignmentScore
+from tables import Assignment as table
+from tables import User
+
+
+from setup import APP, SESSION
 from datetime import datetime
 
-from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort
-from sqlalchemy import create_engine, Table, MetaData
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
-from config import connection_string
 
-from marshmallow import Schema, fields
-
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-metadata = MetaData()
-table = Table('assignment', metadata, autoload_with=engine)
-
-# used to serialize data into non-python form for reading in JSON form
-# see student.py for an example of proper class design. 
-class AssignmentSchema(Schema):
-        assignment_title= fields.Str()
-        content_id= fields.Int()
-        description= fields.Str()
-        deadline= fields.Str()
-        max_score=fields.Int()
-        file_url=fields.Str()
-        grading_criteria= fields.Str()
-        instructions=fields.Str()
-        created_at=fields.Str()
-        submission_format=fields.Str()
-        updated_at=fields.Str()
 
 # resource class
-class Assignment(Resource):
+class AssignmentResource():
 
-    def __init__(self) -> None:
-        super().__init__()
+    @APP.route('/assignment', methods=['GET'])
+    def get_all_assignment():
 
-        self.parser = reqparse.RequestParser()
 
-        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
-        # SIMPLY ADD ALL DB PARAMETERS
-        self.parser.add_argument('content_id', type=int, help="Given Name of course")
-        self.parser.add_argument('assignment_title', type=str, help="Given Name of course")
-        self.parser.add_argument('description', type=str, help="Given Name of course")
-        self.parser.add_argument("deadline", type=str, help="desc of course")
-        self.parser.add_argument("max_score", type=int, help="starting date of course")
-        self.parser.add_argument("file_url", type=str, help="Surname of Student")
-        self.parser.add_argument("grading_criteria", type=str, help="")
-        self.parser.add_argument("instructions", type=str, help="")
-        self.parser.add_argument("submission_format", type=str, help="")
-        self.parser.add_argument("is_published", type=int, help="")
-        self.parser.add_argument("created_at", type=str, help="")
-        self.parser.add_argument("updated_at", type=str, help="")
+        result = SESSION.query(table).all()
 
-    # basic GET request 
-    def get(self, assignment_id):
 
-        # select row from a table with a matching course id
-        # present a result by executing the sql statement 
-        stmt = select(table).where(table.c.assignment_id == assignment_id)
-        result = session.execute(stmt).fetchone()
+        output = []
 
-        print(result._mapping)
+        for item in result:
+            print(item)
 
-        # instantiate schema and serialize the data
-        schema =AssignmentSchema()
+            item_data = {
 
-        # if row is not empty, return accessed data
-        # abort and return a 404 if there is no student
-        if result:
-            return schema.dump(result._mapping), 200
-        else:
-            abort(404, message="Course not found")
+                "id": item.id,
+                "assignment_title": item.assignment_title,
+                "content_id": item.content_id,
+                "description": item.description,
+                "deadline": item.deadline,
+                "max_score": item.max_score,
+                "grading_criteria": item.grading_criteria,
+                "instructions": item.instructions,
+                "created_at": item.created_at,
+                "submission_format": item.submission_format,
+                "updated_at": item.updated_at,
+            }
 
-    def put(self, assignment_id):
-        args = self.parser.parse_args()
+            output.append(item_data)
 
-        # Check if the instructor already exists
-        stmt = select(table).where(table.c.assignment_id == assignment_id)
+        return jsonify(output)
+    
+    @APP.route('/assignment/<id>', methods=['GET'])
+    def get_by_id_assignment(id):
 
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        item_data = {
+
+                "id": item.id,
+                "assignment_title": item.assignment_title,
+                "content_id": item.content_id,
+                "description": item.description,
+                "deadline": item.deadline,
+                "max_score": item.max_score,
+                "grading_criteria": item.grading_criteria,
+                "instructions": item.instructions,
+                "created_at": item.created_at,
+                "submission_format": item.submission_format,
+                "updated_at": item.updated_at,
+            }
+
+
+        return jsonify(item_data)
+    
+    # this route accesses all the scores of a given assignment
+    @APP.route('/assignment/<id>/scores', methods=['GET'])
+    def get_by_id_assignment_scores(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        output = []
+
+        for i in item.scores:
+
+            # the assignment score object 
+            score : AssignmentScore = i
+
+            # the student who tookt the test
+            s : User = score.student
+
+            item_data = {
+
+                "score": score.score,
+                "submission date": score.submission_date,
+                "student id": score.student_id,
+                "student name": f"{s.name_given} {s.name_last}",
+                "assignment name": item.assignment_title,
+                "completed_on_time": (item.deadline >= score.submission_date)
+                }
+            
+            output.append(item_data)
+
+        return jsonify(output)
+    
+
+    
+    @APP.route('/assignment/<id>', methods=['DELETE'])
+    def delete_assignment(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        SESSION.delete(item)
+        SESSION.commit()
         
+        return jsonify({"message": "user_deleted"})
+    
+    @APP.route('/assignment/<id>', methods=['PUT'])
+    def update_assignment(id):
 
-        result = session.execute(stmt).fetchone()
+        data = request.get_json()
 
-        if result:
-            # Update the existing student      
-            # 
-            stmt = table.update().where(table.c.assignment_id == assignment_id).values(
-            assignment_title=args['assignment_title'],
-            content_id=args['content_id'],
-            description=args['description'],
-            deadline=args['deadline'],
-            max_score=args['max_score'],
-            file_url=args['file_url'],
-            grading_criteria=args['grading_criteria'],
-            instructions=args['instructions'],
-            submission_format=args['submission_format'],
-            created_at=args['created_at'],
-            updated_at=args['updated_at']
-            )
+        q = SESSION.query(table).filter(table.id == id).first()
 
-            session.execute(stmt)
-            session.commit()
-            return {assignment_id: args}, 200
-        else:
+        q.content_id = data["content_id"]
+        q.assignment_title = data["assignment_title"]
+        q.description = data["description"]
+        q.deadline = data["deadline"]
+        q.created_at = datetime().now()
+        q.submission_format = data["submission_format"]
+        q.updated_at = datetime().now()
         
+        SESSION.add(q)
+        SESSION.commit()
 
-            # Insert a new instructor
-            stmt = table.insert().values(
-            assignment_title=args['assignment_title'],
-            content_id=args['content_id'],
-            description=args['description'],
-            deadline=args['deadline'],
-            max_score=args['max_score'],
-            file_url=args['file_url'],
-            grading_criteria=args['grading_criteria'],
-            instructions=args['instructions'],
-            submission_format=args['submission_format'],
-            created_at=args['created_at'],
-            updated_at=args['updated_at']
-
-            )
-            session.execute(stmt)
-            session.commit()
-            return {assignment_id: args}, 201
-
-    def delete(self, assignment_id):
-
-        stmt = table.delete().where(table.c.assignment_id == assignment_id)
-        session.execute(stmt)
-        session.commit()
-        return '', 204
+        return jsonify({"message":"user updated"})
+    

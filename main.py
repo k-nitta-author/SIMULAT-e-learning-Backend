@@ -1,53 +1,97 @@
 import flask
 
-from flask import Flask
-from flask_restful import Api
+from flask import Flask, request, jsonify, make_response
 
-from resources.student import Student
-from resources.instructor import Instructor
-from resources.course import Course 
-from resources.quiz import Quiz
-from resources.quiz_score import QuizScore
-from resources.content import Content
-from resources.lesson_material import LessonMaterial
-from resources.course_enrollment import CourseEnrollment
-from resources.assignment import Assignment
-from resources.assignment_score import AssignmentScore
-from resources.daily_challenge import DailyChallenge
-from resources.daily_challenge_score import DailyChallengeScore
+# the below are for configuring the token
+import jwt
+from functools import wraps
+from datetime import datetime, timedelta
 
-app = Flask(__name__)
+from resources.user import UserResource
+from resources.course import CourseResource
+from resources.course_enrollment import CourseEnrollmentResource
+from resources.content import ContentResource
+from resources.challenge import DailyChallengeResource
+from resources.challenge_score import DailyChallengeScoreResource
+from resources.quiz import QuizResource
+from resources.quiz_score import QuizScoreResource
+from resources.lesson_material import LessonMaterialResource
+from resources.assignment import AssignmentResource
+from resources.assignment_score import AssignmentScoreResource
 
-api = Api(app)
+from setup import APP
 
-# Add each resource class to the api through dependency injection
-# each call of add_resource injects the class which the api instantiates
-# the second parameter is the URL and URI specified
 
-api.add_resource(Student, "/student/<int:student_id>")
-api.add_resource(Instructor, "/instructor/<int:instructor_id>")
+APP.config['SECRET KEY'] = 'SECRET'
 
-api.add_resource(Course, "/course/<int:course_id>")
-api.add_resource(CourseEnrollment, "/enrollment/<int:enrollment_id>")
+user_resource = UserResource()
+course_resource = CourseResource()
+course_enrollment_resource = CourseEnrollmentResource()
+content_resource = ContentResource()
+challenege_resource = DailyChallengeResource()
+challenege_score_resource = DailyChallengeScoreResource()
 
-api.add_resource(Quiz, "/quiz/<int:quiz_id>")
-api.add_resource(QuizScore, "/quiz_score/<int:quiz_score_id>")
+quiz_resource = QuizResource()
+quiz_score_resource = QuizScoreResource()
 
-api.add_resource(Content, "/content/<int:content_id>")
-api.add_resource(LessonMaterial, "/lesson_material/<int:material_id>")
+material_resource = LessonMaterialResource()
+assignemnt_res = AssignmentResource()
+assignment_score_res = AssignmentScoreResource()
 
-api.add_resource(DailyChallenge, "/challenge/<int:challenge_id>")
-api.add_resource(DailyChallengeScore, "/challenge_score/<int:challenge_score_id>")
 
-api.add_resource(Assignment, "/assignment/<int:assignment_id>")
-api.add_resource(AssignmentScore, "/assignment_score/<int:assignment_score_id>")
 
-@app.route('/')
+@APP.route('/')
 def hello_world():
     return 'Hello, World!'
 
 
+# used for logging into the API
+@APP.route('/login', methods=['POST'])
+def login():
+
+    auth = request.authorization
+
+    if auth and auth.password == '1':
+        
+
+        token = jwt.encode({
+            'user':auth.username,
+            'expiration': str(datetime.now() + timedelta(seconds=60))
+        },
+        
+            APP.config['SECRET KEY']
+        )
+
+        return jsonify({'token': token})
+    
+    else:
+        return make_response('Unable to verify', 403, {'WWW-Authenticate': 'Basic Realm Authentication Failed'})
+
+
+# used for decorating functions, demanding they nhave a valid token
+def token_required(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'x-access-token' in request.headers:
+
+            token = request.headers['x-access-token']
+
+        if not token: return jsonify({"messsage": "token is missing"}, 401)
+
+        try:
+            data = jwt.decode(token, APP.config['SECRET KEY'])
+
+        except:
+            return jsonify({"Alert!": 'Invalid token'})
+
+    
+        return func(*args, **kwargs)
+    
+    return decorated
+
 if __name__ == '__main__':
     
-    app.run(debug=True, host='0.0.0.0')
+    APP.run(debug=True, host='0.0.0.0')
 

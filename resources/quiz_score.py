@@ -1,115 +1,80 @@
+from flask import jsonify, request
+from tables import QuizScore as table
+from setup import APP, SESSION
 from datetime import datetime
 
-from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort
-from sqlalchemy import create_engine, Table, MetaData, select
-from sqlalchemy.orm import sessionmaker
-from config import connection_string
-
-from marshmallow import Schema, fields
-
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-metadata = MetaData()
-table = Table('quizscore', metadata, autoload_with=engine)
-
-
-# used to serialize data into non-python form for reading in JSON form
-# see student.py for an example of proper class design. 
-class QuizScoreSchema(Schema):
-        quiz_score_id= fields.Int()
-        score=fields.Int()
-        submission_date=fields.Str()
-        quiz_id=fields.Int()
-        student_id=fields.Int()
-
 # resource class
-class QuizScore(Resource):
+class QuizScoreResource():
 
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.parser = reqparse.RequestParser()
-
-        # NECESSARY TO PARSE ALL JSON REQUEST ARGUMENTS.
-        # SIMPLY ADD ALL DB PARAMETERS
-
-        self.parser = reqparse.RequestParser()
-        self.parser.add_argument("quiz_score_id", type=int, help="Given Name of Student")
-        self.parser.add_argument("score", type=int, help="Given Name of Student")
-        self.parser.add_argument("submission_date", type=str, help="Middle Name of Student")
-        self.parser.add_argument("quiz_id", type=int, help="Surname of Student")
-        self.parser.add_argument("student_id", type=int, help="DOB of Student")
-
-    # basic GET request 
-    def get(self, quiz_score_id):
-
-        # select row from a table with a matching instructor id
-        # present a result by executing the sql statement 
-        stmt = select(table).where(table.c.quiz_score_id == quiz_score_id)
-        result = session.execute(stmt).fetchone()
-
-        # instantiate schema and serialize the data
-        schema =QuizScoreSchema()
-        dump = schema.dump(result._mapping)
+    @APP.route('/user/quiz/scores', methods=['GET'])
+    def get_all_quiz_scores():
 
 
-        # if row is not empty, return accessed data
-        # abort and return a 404 if there is no student
-        if result:
-            return dump, 200
-        else:
-            abort(404, message="Student not found")
+        result = SESSION.query(table).all()
 
-    def put(self, quiz_score_id):
-        args = self.parser.parse_args()
 
-        # Check if the instructor already exists
-        stmt = select(table).where(table.c.quiz_score_id == quiz_score_id)
+        output = []
+
+        for item in result:
+            print(item)
+
+            item_data = {
+                "score": item.score,
+                "submission_date": item.submission_date,
+                "quiz_id": item.quiz_id,
+                "student_id": item.student_id
+            }
+
+            output.append(item_data)
+
+        return jsonify(output)
+    
+    @APP.route('/user/quiz/<id>/score', methods=['GET'])
+    def get_by_id_quiz_scores(id):
+
+        item = SESSION.query(table).filter(table.id == id).first()
+
+        if not item: return jsonify({"Message":"No User by ID"}), 404
+
+        item_data = {
+                "score": item.score,
+                "submission_date": item.submission_date,
+                "quiz_id": item.quiz_id,
+                "student_id": item.student_id
+
+            }
+
+
+        return jsonify(item_data)
+    
+    @APP.route('/user/quiz/<id>', methods=['POST'])
+    def create_quiz_scores():
+
+        data = request.get_json()
+
+        q = table()
+
 
         
+        SESSION.add(q)
+        SESSION.commit()
 
-        result = session.execute(stmt).fetchone()
+        return jsonify({"message": "user_created"})
+    
+    @APP.route('/user/quiz/<id>/score', methods=['PUT'])
+    def update_quiz_score(id):
 
-        if result:
-            # Update the existing student
-            stmt = table.update().where(table.c.quiz_score_id == quiz_score_id).values(
-            quiz_score_id=args['quiz_score_id'],
-            score=args['score'],
-            submission_date=args['submission_date'],
-            quiz_id=args['quiz_id'],
-            student_id=args['student_id']
+        data = request.get_json()
 
+        q = SESSION.query(table).filter(table.id == id).first()
 
+        q.score = data["score"]
+        q.submission_date = data["submission_date"]
+        q.quiz_id = data["quiz_id"]
+        q.student_id = data["student_id"]
+        
+        SESSION.add(q)
+        SESSION.commit()
 
-            # Careful around dates; they need to be formatted dd-mm-YYYY according to db
-
-            )
-            session.execute(stmt)
-            session.commit()
-            return {quiz_score_id: args}, 200
-        else:        
-
-            # Insert a new instructor
-            stmt = table.insert().values(
-            quiz_score_id=args['quiz_score_id'],
-            score=args['score'],
-            submission_date=args['submission_date'],
-            quiz_id=args['quiz_id'],
-            student_id=args['student_id']
-            
-
-            )
-            session.execute(stmt)
-            session.commit()
-            return {quiz_score_id: args}, 201
-
-    def delete(self, quiz_score_id):
-
-        stmt = table.delete().where(table.c.quiz_score_id == quiz_score_id)
-        session.execute(stmt)
-        session.commit()
-        return '', 204
+        return jsonify({"message":"user updated"})
+    
