@@ -1,17 +1,19 @@
 import enum
 
 from config import connection_string
-from typing import List, Optional 
+from typing import List 
 
 from datetime import date
 
-from sqlalchemy import create_engine, table, column, Enum, Integer, String, Boolean, DECIMAL, ForeignKey
+from sqlalchemy import create_engine, Enum, String, ForeignKey, CheckConstraint
 
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+
+from werkzeug.security import check_password_hash
 
 engine = create_engine(connection_string)
 
@@ -32,7 +34,7 @@ class User(BASE):
     gender: Mapped[int] = mapped_column(Enum(Gender))
     
     username: Mapped[str] = mapped_column(String(30), unique=True)
-    password: Mapped[str] = mapped_column(String(30))
+    password: Mapped[str] = mapped_column(String(110))
 
     is_admin: Mapped[bool]
     is_student: Mapped[bool]
@@ -52,6 +54,28 @@ class User(BASE):
 
     study_groups_membership: Mapped[List["StudyGroupMembership"]]= relationship(back_populates="member", cascade="all, delete-orphan")
 
+    def check_login_credentials(session, u_name, p_word):
+        
+        u: User = session.query(User).filter_by(username = u_name).first()
+
+        if not u is None:
+
+            return u, check_password_hash(u.password, p_word)
+        
+        return None, False
+    
+    def get_roles_list(u) -> List:
+
+        roles = []
+
+        u: User = u
+        
+        if u.is_admin: roles.append("admin")
+        if u.is_student: roles.append("student")
+        if u.is_instructor: roles.append("instructor") 
+
+        return roles
+
 class Quiz(BASE):
 
     __tablename__ = "quiz"
@@ -62,6 +86,10 @@ class Quiz(BASE):
     description: Mapped[str] = mapped_column(String(500))
     time_limit: Mapped[float]
     is_published: Mapped[bool]
+
+    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
+
+    term: Mapped["Term"] = relationship(back_populates="quizzes")
 
 class QuizScore(BASE):
 
@@ -76,14 +104,24 @@ class QuizScore(BASE):
 
     user: Mapped[List["User"]] = relationship(back_populates="quiz_scores")
 
-
-# TODO - CURRENTLY INCOMPLETE
 class Term(BASE):
 
     __tablename__ = "term"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    school_year_start: Mapped[date] = mapped_column(unique=True)
+    school_year_end: Mapped[date] = mapped_column(unique=True)
+    
+    """
+    content: Mapped[List["Content"]] = relationship(back_populates="term")
+    """
 
+    quizzes: Mapped[List["Quiz"]] = relationship(back_populates="term")
+    assignments: Mapped[List["Assignment"]] = relationship(back_populates="term")
+    courses:  Mapped[List["Course"]] = relationship(back_populates="term")
+    content: Mapped[List["Content"]] = relationship(back_populates="term")
+
+    
 
 
 class LessonMaterial(BASE):
@@ -142,6 +180,7 @@ class Course(BASE):
 
 
     instructor_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
 
     is_published: Mapped[bool]
     created_at: Mapped[date]
@@ -151,11 +190,13 @@ class Course(BASE):
     
     instructor: Mapped[User] = relationship(back_populates="courses_created")
 
-    content_list: Mapped[List["Content"]] = relationship(back_populates="course")
+    content_list: Mapped[List["Content"]] = relationship(back_populates="courses")
 
-    enrollments: Mapped[List["CourseEnrollment"]] = relationship(back_populates="course")
+    enrollments: Mapped[List["CourseEnrollment"]] = relationship(back_populates="courses")
 
-    study_groups: Mapped[List["Course"]] = relationship(back_populates="course")
+    study_groups: Mapped[List["StudyGroup"]] = relationship(back_populates="courses")
+
+    term:  Mapped["Term"] = relationship(back_populates="courses")
 
 
 class CourseEnrollment(BASE):
@@ -169,7 +210,7 @@ class CourseEnrollment(BASE):
 
     # foreign key relationships
     
-    course: Mapped[Course] = relationship(back_populates="enrollments")
+    courses: Mapped[Course] = relationship(back_populates="enrollments")
     student: Mapped[User] = relationship(back_populates="enrollments")
 
 
@@ -182,6 +223,7 @@ class Assignment(BASE):
     id: Mapped[int] = mapped_column(primary_key=True)
     
     content_id: Mapped[int] = mapped_column(ForeignKey("content.id"))
+    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
     
     description: Mapped[str] = mapped_column(String(500))
     deadline: Mapped[date]
@@ -192,6 +234,8 @@ class Assignment(BASE):
     
     submission_format: Mapped[str] = mapped_column(String(10))
     updated_at: Mapped[date]
+
+    term: Mapped["Term"] = relationship(back_populates="assignments")
 
     scores: Mapped[List["AssignmentScore"]] = relationship(back_populates="assignment", cascade="all, delete-orphan")
 
@@ -215,6 +259,7 @@ class Content(BASE):
     id: Mapped[int] = mapped_column(primary_key=True)
     
     course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
+    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
 
     type: Mapped[str] = mapped_column(String(30))
     title: Mapped[str] = mapped_column(String(30))
@@ -223,7 +268,8 @@ class Content(BASE):
     created_at: Mapped[date]
 
     lesson_materials: Mapped[List["LessonMaterial"]] = relationship(back_populates="content")
-    course: Mapped["Course"] = relationship(back_populates="content_list")
+    courses: Mapped["Course"] = relationship(back_populates="content_list")
+    term: Mapped[Term] = relationship(back_populates="content")
 
 class BulletinPost(BASE):
     
@@ -247,15 +293,29 @@ class Badge(BASE):
     description: Mapped[str] = mapped_column(String(400))
     pts_required: Mapped[int]
 
+    def get_student_badges(session: Session, u: User):
+
+        score = u.progress_score
+
+        badge_list: list = session.query(Badge).filter(Badge.pts_required <= score).all()
+
+        output_list = [
+            {"name":badge.name,
+             "description": badge.description,
+             "pts_required": badge.pts_required} for badge in badge_list
+        ]
+
+        return output_list
+
 class StudyGroup(BASE):
     __tablename__ = "study_group"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
-    course_id: Mapped[int] = mapped_column()
+    course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
     max_members = Mapped[int]
 
-    course: Mapped["Course"]=relationship(back_populates="study_groups")
+    courses: Mapped["Course"]=relationship(back_populates="study_groups")
 
     memberships: Mapped[List["StudyGroupMembership"]]=relationship(back_populates="study_group", cascade="all, delete-orphan")
 

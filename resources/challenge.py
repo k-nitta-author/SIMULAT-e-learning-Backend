@@ -3,6 +3,7 @@ from tables import DailyChallenge as table
 from setup import APP, SESSION
 from datetime import datetime
 
+from decorators import token_required
 
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 

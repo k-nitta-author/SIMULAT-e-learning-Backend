@@ -17,10 +17,15 @@ from tables import LessonMaterial
 from tables import Content
 from tables import DailyChallenge
 from tables import DailyChallengeScore
+from tables import Term
 
 from tables import Gender
 
+from datetime import datetime
+
 from flask import Flask
+from werkzeug.security import generate_password_hash
+
 
 ENGINE = create_engine(connection_string)
 session = sessionmaker(bind=ENGINE)
@@ -28,6 +33,7 @@ session = sessionmaker(bind=ENGINE)
 SESSION = session()
 
 APP = Flask(__name__)
+APP.secret_key = "secret_key"
 
 def add_to_session(func):
     
@@ -63,7 +69,8 @@ def create_default_admin() -> User:
     ad_user.progress_score = 0
 
     ad_user.username = "k.nitta.it"
-    ad_user.password = "qweqweqrqqwe"
+
+    ad_user.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     return ad_user
 
@@ -78,7 +85,9 @@ def create_course() -> Course:
     c.description = "sadasd skajhd kajshdkj asdh"
     
     c.created_at = datetime.now()
+    
     c.instructor_id = 2
+    c.term_id = 1
 
     c.is_published = False
     c.updated_at = datetime.now()
@@ -115,7 +124,7 @@ def create_default_student() -> User:
     default_student.progress_score = 0
 
     default_student.username = "j_fakename"
-    default_student.password = "qweqweqrqqwe"
+    default_student.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     return default_student
 
@@ -138,7 +147,7 @@ def create_default_instructor() -> User:
 
 
     default_instructor.username = "j_teacherman"
-    default_instructor.password = "qweqweqrqqwe"
+    default_instructor.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     return default_instructor
 
@@ -209,6 +218,7 @@ def create_default_assignment() -> Assignment:
     a.created_at = datetime.now()
     a.deadline = "2023-8-2"
     a.content_id = 1
+    a.term_id = 1
 
     return a
 
@@ -234,6 +244,7 @@ def create_quiz() -> Quiz:
     q.description = "asdasd"
     q.is_published = False
     q.time_limit = 30
+    q.term_id = 1
     
     return q
 
@@ -249,7 +260,15 @@ def create_quiz_score() -> QuizScore:
 
     return qs
 
-    
+@add_to_session
+def create_term() -> Term:
+
+    t = Term()
+
+    t.school_year_end = datetime(2024, 2, 1)
+    t.school_year_start = datetime(2024, 5, 11)
+
+    return t
 
 if __name__ == "__main__":
     
@@ -260,6 +279,8 @@ if __name__ == "__main__":
         admin = create_default_admin()
         instructor = create_default_instructor()
         student = create_default_student()
+
+        term = create_term()
         
         course = create_course()
         enrollment = create_course_enrollment()

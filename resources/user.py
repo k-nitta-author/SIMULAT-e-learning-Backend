@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from tables import User as table
+from sqlalchemy.exc import IntegrityError, PendingRollbackError
 
 from tables import Quiz
 from tables import QuizScore
@@ -7,8 +8,17 @@ from tables import DailyChallengeScore
 from tables import AssignmentScore
 from tables import StudyGroup
 from tables import Course
+from tables import Gender
+from tables import Badge
 
 from setup import APP, SESSION
+from decorators import token_required
+
+from datetime import datetime, timedelta
+
+from werkzeug.security import generate_password_hash
+import jwt
+
 
 # resource class
 class UserResource():
@@ -16,9 +26,7 @@ class UserResource():
     @APP.route('/user', methods=['GET'])
     def get_all():
 
-
         result = SESSION.query(table).all()
-
 
         output = []
 
@@ -37,6 +45,8 @@ class UserResource():
                 "is_admin": item.is_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
+                "progress_score": item.progress_score,
+                "gender": item.gender.name
             }
 
             output.append(item_data)
@@ -62,6 +72,8 @@ class UserResource():
                 "is_admin": item.is_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
+                "progress_score": item.progress_score,
+                "gender": item.gender.name
             }
 
 
@@ -75,7 +87,6 @@ class UserResource():
         output = []
 
         for item in result:
-            print(item)
 
             item_data = {
 
@@ -89,6 +100,8 @@ class UserResource():
                 "is_admin": item.is_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
+                "progress_score": item.progress_score,
+                "gender": item.gender.name
             }
 
             output.append(item_data)
@@ -116,12 +129,23 @@ class UserResource():
                 "is_admin": item.is_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
+                "progress_score": item.progress_score,
+                "gender": item.gender.name
             }
 
             output.append(item_data)
 
 
         return jsonify(output)
+    
+    @APP.route('/user/<id>/badges', methods=['GET'])
+    def get_student_badges(id):
+
+        student: table = SESSION.query(table).filter(table.id == id).first()
+
+        badges : list = Badge.get_student_badges(SESSION, student)
+        
+        return jsonify({f"{student.name_given} {student.name_last}": badges})
     
     @APP.route('/user/admin', methods=['GET'])
     def get_admin():
@@ -144,6 +168,8 @@ class UserResource():
                 "is_admin": item.is_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
+                "progress_score": item.progress_score,
+                "gender": item.gender.name
             }
 
             output.append(item_data)
@@ -162,17 +188,32 @@ class UserResource():
         u.is_admin = False
         u.is_instructor = False
         u.is_student = False
-        u.password = data["password"]
+        u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
         u.name_given= data["name_given"]
         u.name_last = data["name_last"]
+        u.gender = data["gender"]
+        u.progress_score = 0
         
-        SESSION.add(u)
-        SESSION.commit()
+        try:
+            SESSION.add(u)
+            SESSION.commit()
+
+        except IntegrityError:
+
+            SESSION.rollback()
+            return jsonify({"message": "invalid input - integrity error"})
+        
+        except PendingRollbackError:
+            
+            SESSION.rollback()
+
+            return jsonify({"message": "invalid input - PendingRollbackError"})
 
         return jsonify({"message": "user_created"})
     
     @APP.route('/user/<id>', methods=['DELETE'])
+    @token_required("admin")
     def delete(id):
 
         item = SESSION.query(table).filter(table.id == id).first()
@@ -181,8 +222,6 @@ class UserResource():
 
         SESSION.delete(item)
         SESSION.commit()
-
-        
 
         return jsonify({"message": "user_deleted"})
     
@@ -197,7 +236,7 @@ class UserResource():
         u.is_admin = False
         u.is_instructor = False
         u.is_student = False
-        u.password = data["password"]
+        u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
         u.name_given= data["name_given"]
         u.name_last = data["name_last"]
@@ -207,7 +246,21 @@ class UserResource():
 
         return jsonify({"message":"user updated"})
     
+    @APP.route('/user/<id>/grant', methods=['PUT'])
+    def grant_priveliges_user(id):
 
+        data = request.get_json()
+
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        u.is_admin = data["is_admin"]
+        u.is_instructor = data["is_instructor"]
+        u.is_student = data["is_student"]
+        
+        SESSION.add(u)
+        SESSION.commit()
+
+        return jsonify({"message":"user updated"})
     
     @APP.route('/user/<id>/q/scores', methods=['GET'])
     def get_user_quiz_scores(id):
@@ -303,6 +356,28 @@ class UserResource():
 
             output.append(score_data)
 
+        return jsonify({"message":output})    
 
+    @APP.route('/user/login', methods=['GET'])
+    def login():
 
-        return jsonify({"message":output})
+        auth = request.authorization
+
+        if auth is None: return jsonify({"message": "no user credentials"}), 401 
+
+        params = auth.parameters
+
+        username  = params.get('username')
+        password  = params.get('password')
+
+        u, can_login = table.check_login_credentials(SESSION, username, password)
+
+        if can_login:
+            token = jwt.encode({
+                'user': u.username,
+                'exp': datetime.now() + timedelta(seconds=10),
+                'roles': table.get_roles_list(u)}, APP.secret_key)
+
+            return token
+        
+        return jsonify({"message": "invalid user credentials"})

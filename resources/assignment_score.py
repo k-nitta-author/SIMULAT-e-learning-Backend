@@ -2,7 +2,7 @@ from flask import jsonify, request
 from tables import AssignmentScore as table
 from setup import APP, SESSION
 from datetime import datetime
-
+from decorators import token_required
 
 # resource class
 class AssignmentScoreResource():

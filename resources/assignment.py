@@ -8,7 +8,7 @@ from tables import User
 from setup import APP, SESSION
 from datetime import datetime
 
-
+from decorators import token_required
 
 # resource class
 class AssignmentResource():

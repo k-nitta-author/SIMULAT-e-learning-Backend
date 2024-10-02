@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from datetime import datetime
 
+from decorators import token_required
+
 # resource class
 class CourseResource():
 

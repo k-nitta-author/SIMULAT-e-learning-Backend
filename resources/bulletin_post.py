@@ -9,6 +9,8 @@ from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
 
+from decorators import token_required
+
 
 # resource class
 class AssignmentResource():
