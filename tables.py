@@ -33,15 +33,23 @@ class User(BASE):
     email: Mapped[str] = mapped_column(String(30), unique=True)
     gender: Mapped[int] = mapped_column(Enum(Gender))
     
+    # user's login credentials
+    # user is meant to login to the login api call to gain token
+    # the client would then use token for all tasks that need
+    # authentication
     username: Mapped[str] = mapped_column(String(30), unique=True)
     password: Mapped[str] = mapped_column(String(110))
 
+    # roles for access priveliges
+    # a user may have any combination of the below roles
     is_admin: Mapped[bool]
     is_student: Mapped[bool]
     is_instructor: Mapped[bool]
 
     # refers to the point allocation for student's overall progress
+    # badges are tentatively allocated based on progress score
     # should be left zero for instructors
+    # TODO: consider changing that, make badge earning more interactive, dynamic
     progress_score: Mapped[int]
 
     quiz_scores: Mapped[List["QuizScore"]] = relationship(back_populates="user")
@@ -54,6 +62,9 @@ class User(BASE):
 
     study_groups_membership: Mapped[List["StudyGroupMembership"]]= relationship(back_populates="member", cascade="all, delete-orphan")
 
+    # helper method for authentication
+    # returns the user object and the result of their password hash
+    # otherwise it gives nothing
     def check_login_credentials(session, u_name, p_word):
         
         u: User = session.query(User).filter_by(username = u_name).first()
@@ -64,6 +75,9 @@ class User(BASE):
         
         return None, False
     
+    # helper method for authorization
+    # returns a list of the roles a user has
+    # list obviously empty if no roles
     def get_roles_list(u) -> List:
 
         roles = []
@@ -76,6 +90,7 @@ class User(BASE):
 
         return roles
 
+# table for quiz
 class Quiz(BASE):
 
     __tablename__ = "quiz"
@@ -87,8 +102,10 @@ class Quiz(BASE):
     time_limit: Mapped[float]
     is_published: Mapped[bool]
 
+    # the term during which the quiz released
     term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
 
+    # gets the term object for more detailed use
     term: Mapped["Term"] = relationship(back_populates="quizzes")
 
 class QuizScore(BASE):
@@ -111,18 +128,11 @@ class Term(BASE):
     id: Mapped[int] = mapped_column(primary_key=True)
     school_year_start: Mapped[date] = mapped_column(unique=True)
     school_year_end: Mapped[date] = mapped_column(unique=True)
-    
-    """
-    content: Mapped[List["Content"]] = relationship(back_populates="term")
-    """
 
     quizzes: Mapped[List["Quiz"]] = relationship(back_populates="term")
     assignments: Mapped[List["Assignment"]] = relationship(back_populates="term")
     courses:  Mapped[List["Course"]] = relationship(back_populates="term")
     content: Mapped[List["Content"]] = relationship(back_populates="term")
-
-    
-
 
 class LessonMaterial(BASE):
 
@@ -191,9 +201,7 @@ class Course(BASE):
     instructor: Mapped[User] = relationship(back_populates="courses_created")
 
     content_list: Mapped[List["Content"]] = relationship(back_populates="courses")
-
     enrollments: Mapped[List["CourseEnrollment"]] = relationship(back_populates="courses")
-
     study_groups: Mapped[List["StudyGroup"]] = relationship(back_populates="courses")
 
     term:  Mapped["Term"] = relationship(back_populates="courses")
@@ -257,15 +265,14 @@ class Content(BASE):
     __tablename__ = "content"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    
-    course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
-    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
-
     type: Mapped[str] = mapped_column(String(30))
     title: Mapped[str] = mapped_column(String(30))
     description: Mapped[str] = mapped_column(String(500))
     url: Mapped[str] = mapped_column(String(30))
     created_at: Mapped[date]
+
+    course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
+    term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
 
     lesson_materials: Mapped[List["LessonMaterial"]] = relationship(back_populates="content")
     courses: Mapped["Course"] = relationship(back_populates="content_list")

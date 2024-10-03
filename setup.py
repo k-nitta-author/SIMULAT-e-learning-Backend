@@ -18,6 +18,7 @@ from tables import Content
 from tables import DailyChallenge
 from tables import DailyChallengeScore
 from tables import Term
+from tables import Badge
 
 from tables import Gender
 
@@ -41,14 +42,10 @@ def add_to_session(func):
     def wrap(*args, **kwargs):
         obj = func()
 
-        try:
 
-            session.add(obj)
-            session.commit()
+        session.add(obj)
+        session.commit()
 
-        except IntegrityError as e:
-            
-            session.rollback()
 
     return wrap
 
@@ -73,6 +70,16 @@ def create_default_admin() -> User:
     ad_user.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     return ad_user
+
+@add_to_session
+def create_default_badge() -> User:
+    badge = Badge()
+    
+    badge.description = "asddaskjhdkahsdkahdk"
+    badge.name = "Studious Student"
+    badge.pts_required = 100
+    
+    return badge
 
 @add_to_session
 def create_course() -> Course:
@@ -200,6 +207,7 @@ def create_default_content() -> Content:
     c.description = "asd asdhhasdkj ashdkh"
     c.url = "asdkasjd kajsd"
     c.type = "asdasd"
+    c.term_id = 1
     
     return c
 
@@ -297,5 +305,7 @@ if __name__ == "__main__":
         challenge_score = create_daily_challenge_score()
         
         lesson_material = create_default_lesson()
+
+        badge = create_default_badge()
 
         session.commit()

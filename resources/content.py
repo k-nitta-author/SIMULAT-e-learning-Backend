@@ -23,12 +23,10 @@ class ContentResource():
 
                 "id": item.id,
                 "course_id": item.course_id,
-                "content_type": item.content_type,
-                "content_title": item.content_title,
-                "content_description": item.content_description,
-                "content_url": item.content_url,
+                "content_title": item.title,
+                "content_description": item.description,
+                "content_url": item.url,
                 "created_at": item.created_at,
-
             }
 
 
@@ -47,10 +45,9 @@ class ContentResource():
 
                 "id": item.id,
                 "course_id": item.course_id,
-                "content_type": item.content_type,
-                "content_title": item.content_title,
-                "content_description": item.content_description,
-                "content_url": item.content_url,
+                "content_title": item.title,
+                "content_description": item.description,
+                "content_url": item.url,
                 "created_at": item.created_at,
             }
 
@@ -65,11 +62,12 @@ class ContentResource():
         q = table()
 
         q.course_id = data["course_id"]
-        q.content_type = data["content_type"]
-        q.content_title = data["content_title"]
-        q.content_description = data["content_description"]
-        q.content_url = data["content_url"]
+        q.title = data["title"]
+        q.description = data["description"]
+        q.url = data["url"]
         q.created_at = datetime.now()
+        q.term_id = data["term_id"]
+        q.type =  data["type"]
         
         SESSION.add(q)
         SESSION.commit()
@@ -96,11 +94,11 @@ class ContentResource():
         q = SESSION.query(table).filter(table.id == id).first()
 
         q.course_id = data["course_id"]
-        q.content_type = data["content_type"]
-        q.content_title = data["content_title"]
-        q.content_description = data["content_description"]
-        q.content_url = data["content_url"]
+        q.content_title = data["title"]
+        q.content_description = data["description"]
+        q.content_url = data["url"]
         q.created_at = data["created_at"]
+        q.term_id = data["term_id"]
 
         SESSION.add(q)
         SESSION.commit()

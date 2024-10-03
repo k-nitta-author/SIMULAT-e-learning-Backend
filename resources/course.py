@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from tables import Course as table
+from tables import User
 from setup import APP, SESSION
 
 from sqlalchemy.exc import IntegrityError
@@ -33,12 +34,14 @@ class CourseResource():
                 "is_published": item.is_published,
                 "created_at": item.created_at,
                 "updated_at": item.updated_at,
+                "term": item.term_id,
+                "instructor": f"{item.instructor.name_given} {item.instructor.name_last}"
             }
 
             output.append(item_data)
 
         return jsonify(output)
-    
+
     @APP.route('/course/<id>', methods=['GET'])
     def course_get_by_id(id):
 
@@ -56,11 +59,13 @@ class CourseResource():
                 "is_published": item.is_published,
                 "created_at": item.created_at,
                 "updated_at": item.updated_at,
+                "instructor": f"{item.instructor.name_given} {item.instructor.name_last}"
             }
 
 
         return jsonify(item_data)
-    
+
+
     @APP.route('/course', methods=['POST'])
     def course_create():
 

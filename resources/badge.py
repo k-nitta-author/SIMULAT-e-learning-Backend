@@ -8,6 +8,10 @@ from decorators import token_required
 # resource class
 class BadgeResource():
 
+
+    # gets a detailed list of all badges
+    # meant for tables, lists, etc.
+    # TODO: consider additional changes 
     @APP.route('/badge', methods=['GET'])
     def get_all_badge():
 
@@ -29,6 +33,7 @@ class BadgeResource():
 
         return jsonify(output)
     
+    # gets detailed info individual badge
     @APP.route('/quiz/<id>', methods=['GET'])
     def get_by_id_badge(id):
 
@@ -42,12 +47,12 @@ class BadgeResource():
                 "name": item.name,
                 "description":item.description,
                 "pts_required":item.pts_required
-
             }
 
 
         return jsonify(item_data)
     
+    # allows one to create a badge
     @APP.route('/badge', methods=['POST'])
     def create_badge():
 

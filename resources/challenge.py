@@ -77,7 +77,7 @@ class DailyChallengeResource():
             SESSION.rollback()
             return jsonify({"message": "invalid input - integrity error"})
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "user_created"}), 201
     
     @APP.route('/challenge/<id>', methods=['DELETE'])
     def delete_challenge(id):

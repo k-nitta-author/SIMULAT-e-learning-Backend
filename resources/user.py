@@ -23,6 +23,9 @@ import jwt
 # resource class
 class UserResource():
 
+    # get all users
+    # intended for lists and tables with detailed data
+    # CONSIDER: putting behind admin access?
     @APP.route('/user', methods=['GET'])
     def get_all():
 
@@ -31,7 +34,6 @@ class UserResource():
         output = []
 
         for item in result:
-            print(item)
 
             item_data = {
 
@@ -53,6 +55,9 @@ class UserResource():
 
         return jsonify(output)
     
+
+    # get individual users
+    # intended for user profile pages, etc. 
     @APP.route('/user/<id>', methods=['GET'])
     def get_by_id(id):
 
@@ -79,6 +84,9 @@ class UserResource():
 
         return jsonify(item_data)
     
+    # gets all instructors
+    # intended for lists, tables, etc. 
+    # CONSIDER: including informaiton on which class they teach if any
     @APP.route('/user/instructors', methods=['GET'])
     def get_instructors():
 
@@ -108,6 +116,8 @@ class UserResource():
 
         return jsonify(output)
     
+    # get detailed list of students
+    # CONSIDER: adding details on which courses they are enrolled in
     @APP.route('/user/students', methods=['GET'])
     def get_students():
 
@@ -138,6 +148,9 @@ class UserResource():
 
         return jsonify(output)
     
+    # simply gets the student and returns a list of the badges they have earned. 
+    # it is technically possible for a teacher or admin to earn points and badges
+    # not pertienent to change tho
     @APP.route('/user/<id>/badges', methods=['GET'])
     def get_student_badges(id):
 
@@ -147,6 +160,7 @@ class UserResource():
         
         return jsonify({f"{student.name_given} {student.name_last}": badges})
     
+    # gets all admin-level users, nothign more
     @APP.route('/user/admin', methods=['GET'])
     def get_admin():
 
@@ -177,6 +191,7 @@ class UserResource():
 
         return jsonify(output)
     
+    # allows one to create a new user
     @APP.route('/user', methods=['POST'])
     def create():
 
@@ -195,6 +210,9 @@ class UserResource():
         u.gender = data["gender"]
         u.progress_score = 0
         
+        # simple error handling code; meant to rollback session
+        # in case of invalid calls to db
+        # do not modify unless one has anything better.
         try:
             SESSION.add(u)
             SESSION.commit()
@@ -212,6 +230,10 @@ class UserResource():
 
         return jsonify({"message": "user_created"})
     
+
+    # allows one to delete a user
+    # requires token with admin-level priveliges
+    # TODO: consider further security policies
     @APP.route('/user/<id>', methods=['DELETE'])
     @token_required("admin")
     def delete(id):
@@ -225,6 +247,9 @@ class UserResource():
 
         return jsonify({"message": "user_deleted"})
     
+    # allows one to update user data
+    # intended for use in user profiles in edit mode
+    # TODO: consider further changes
     @APP.route('/user/<id>', methods=['PUT'])
     def update(id):
 
@@ -246,7 +271,10 @@ class UserResource():
 
         return jsonify({"message":"user updated"})
     
+    # grants or takes away user priveliges to users
+    # requires admin level access before proceeding
     @APP.route('/user/<id>/grant', methods=['PUT'])
+    @token_required("admin")
     def grant_priveliges_user(id):
 
         data = request.get_json()
@@ -262,6 +290,7 @@ class UserResource():
 
         return jsonify({"message":"user updated"})
     
+    # gets the user's quiz scores if they have any
     @APP.route('/user/<id>/q/scores', methods=['GET'])
     def get_user_quiz_scores(id):
 
@@ -288,6 +317,7 @@ class UserResource():
 
         return jsonify({"message":output})
     
+    # gets the user's scores for the challenges
     @APP.route('/user/<id>/c/scores', methods=['GET'])
     def get_user_challenge_scores(id):
 
@@ -311,6 +341,7 @@ class UserResource():
         return jsonify({"message":output})
     
 
+    # gets the study groups that a user is enrolled into
     @APP.route('/user/<id>/studygroups/', methods=['GET'])
     def get_user_study_groups(id):
 

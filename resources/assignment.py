@@ -4,7 +4,6 @@ from tables import AssignmentScore
 from tables import Assignment as table
 from tables import User
 
-
 from setup import APP, SESSION
 from datetime import datetime
 
@@ -16,14 +15,11 @@ class AssignmentResource():
     @APP.route('/assignment', methods=['GET'])
     def get_all_assignment():
 
-
         result = SESSION.query(table).all()
-
 
         output = []
 
         for item in result:
-            print(item)
 
             item_data = {
 
@@ -100,8 +96,6 @@ class AssignmentResource():
             output.append(item_data)
 
         return jsonify(output)
-    
-
     
     @APP.route('/assignment/<id>', methods=['DELETE'])
     def delete_assignment(id):
