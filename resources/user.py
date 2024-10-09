@@ -45,6 +45,7 @@ class UserResource():
                 "password": item.password,
                 "username": item.username,
                 "is_admin": item.is_admin,
+                "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
@@ -75,6 +76,7 @@ class UserResource():
                 "password": item.password,
                 "username": item.username,
                 "is_admin": item.is_admin,
+                "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
@@ -106,6 +108,7 @@ class UserResource():
                 "password": item.password,
                 "username": item.username,
                 "is_admin": item.is_admin,
+                "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
@@ -137,6 +140,7 @@ class UserResource():
                 "password": item.password,
                 "username": item.username,
                 "is_admin": item.is_admin,
+                "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
@@ -180,6 +184,7 @@ class UserResource():
                 "password": item.password,
                 "username": item.username,
                 "is_admin": item.is_admin,
+                "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
@@ -203,12 +208,14 @@ class UserResource():
         u.is_admin = False
         u.is_instructor = False
         u.is_student = False
+        u.is_super_admin = False
         u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
         u.name_given= data["name_given"]
         u.name_last = data["name_last"]
         u.gender = data["gender"]
         u.progress_score = 0
+        u.active = True
         
         # simple error handling code; meant to rollback session
         # in case of invalid calls to db
@@ -242,7 +249,9 @@ class UserResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
+        item.active = False
+
+        SESSION.add(item)
         SESSION.commit()
 
         return jsonify({"message": "user_deleted"})
@@ -258,9 +267,6 @@ class UserResource():
         u = SESSION.query(table).filter(table.id == id).first()
 
         u.email = data["email"]
-        u.is_admin = False
-        u.is_instructor = False
-        u.is_student = False
         u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
         u.name_given= data["name_given"]
@@ -284,6 +290,7 @@ class UserResource():
         u.is_admin = data["is_admin"]
         u.is_instructor = data["is_instructor"]
         u.is_student = data["is_student"]
+        u.is_super_admin = data["is_super_admin"]
         
         SESSION.add(u)
         SESSION.commit()

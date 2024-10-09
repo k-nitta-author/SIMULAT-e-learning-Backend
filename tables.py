@@ -19,10 +19,14 @@ engine = create_engine(connection_string)
 
 BASE = declarative_base()
 
+
+# did not know how to best encode gender into database
+# TODO: consider modifying if there is issue 
 class Gender(enum.Enum):
     private = 0
     female = 1
     male = 2
+    other = 3
 
 class User(BASE):
     __tablename__ = "user"
@@ -45,6 +49,7 @@ class User(BASE):
     is_admin: Mapped[bool]
     is_student: Mapped[bool]
     is_instructor: Mapped[bool]
+    is_super_admin: Mapped[bool]
 
     # refers to the point allocation for student's overall progress
     # badges are tentatively allocated based on progress score
@@ -52,14 +57,14 @@ class User(BASE):
     # TODO: consider changing that, make badge earning more interactive, dynamic
     progress_score: Mapped[int]
 
-    quiz_scores: Mapped[List["QuizScore"]] = relationship(back_populates="user")
+    active: Mapped[bool]
 
+    # relationships with other tables
+    quiz_scores: Mapped[List["QuizScore"]] = relationship(back_populates="user")
     enrollments: Mapped[List["CourseEnrollment"]] = relationship(back_populates="student", cascade="all, delete-orphan")
     assignment_scores: Mapped[List["AssignmentScore"]] = relationship(back_populates="student", cascade="all, delete-orphan")
     challenge_scores: Mapped[List["DailyChallengeScore"]] = relationship(back_populates="student", cascade="all, delete-orphan")
-    
     courses_created: Mapped[List["Course"]] = relationship(back_populates="instructor", cascade="all, delete-orphan")
-
     study_groups_membership: Mapped[List["StudyGroupMembership"]]= relationship(back_populates="member", cascade="all, delete-orphan")
 
     # helper method for authentication
@@ -86,7 +91,8 @@ class User(BASE):
         
         if u.is_admin: roles.append("admin")
         if u.is_student: roles.append("student")
-        if u.is_instructor: roles.append("instructor") 
+        if u.is_instructor: roles.append("instructor")
+        if u.is_super_admin: roles.append("super_admin")
 
         return roles
 
@@ -121,23 +127,29 @@ class QuizScore(BASE):
 
     user: Mapped[List["User"]] = relationship(back_populates="quiz_scores")
 
+
+# The Term table
 class Term(BASE):
 
     __tablename__ = "term"
 
+    # the time period from which term starts and ends
     id: Mapped[int] = mapped_column(primary_key=True)
     school_year_start: Mapped[date] = mapped_column(unique=True)
     school_year_end: Mapped[date] = mapped_column(unique=True)
 
+    # relationships with various other tables
     quizzes: Mapped[List["Quiz"]] = relationship(back_populates="term")
     assignments: Mapped[List["Assignment"]] = relationship(back_populates="term")
     courses:  Mapped[List["Course"]] = relationship(back_populates="term")
     content: Mapped[List["Content"]] = relationship(back_populates="term")
 
+# the Lesson Material table
 class LessonMaterial(BASE):
 
     __tablename__ = "lesson_material"
 
+    
     id: Mapped[int] = mapped_column(primary_key=True)
     content_id: Mapped[int] = mapped_column(ForeignKey("content.id"))
     material_title: Mapped[str] = mapped_column(String(30))
@@ -148,6 +160,7 @@ class LessonMaterial(BASE):
     content: Mapped["Content"] = relationship(back_populates="lesson_materials")
 
 
+# the Daily Challenge table
 class DailyChallenge(BASE):
 
     __tablename__ = "daily_challenge"

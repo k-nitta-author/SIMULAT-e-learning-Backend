@@ -23,7 +23,6 @@ class AssignmentResource():
         output = []
 
         for item in result:
-            print(item)
 
             item_data = {
 

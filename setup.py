@@ -69,6 +69,8 @@ def create_default_admin() -> User:
 
     ad_user.password = generate_password_hash("password", method='pbkdf2:sha256')
 
+    ad_user.is_super_admin = False
+
     return ad_user
 
 @add_to_session
@@ -133,6 +135,8 @@ def create_default_student() -> User:
     default_student.username = "j_fakename"
     default_student.password = generate_password_hash("password", method='pbkdf2:sha256')
 
+    default_student.is_super_admin = False
+
     return default_student
 
 @add_to_session
@@ -156,7 +160,33 @@ def create_default_instructor() -> User:
     default_instructor.username = "j_teacherman"
     default_instructor.password = generate_password_hash("password", method='pbkdf2:sha256')
 
+    default_instructor.is_super_admin = False
+
     return default_instructor
+
+@add_to_session
+def create_default_super_admin() -> User:
+    super_admin = User()
+    
+    super_admin.email = "a.simpson.@omail.com"
+    super_admin.name_given = "Sanson"
+    super_admin.name_last = "Alba"
+
+    super_admin.gender = Gender.female
+
+
+    super_admin.is_student = False
+    super_admin.is_instructor= False
+    super_admin.is_admin= False
+
+    super_admin.progress_score = 0
+
+    super_admin.username = "root_admin"
+    super_admin.password = generate_password_hash("password", method='pbkdf2:sha256')
+
+    super_admin.is_super_admin = True
+
+    return super_admin
 
 @add_to_session
 def create_default_challenge() -> DailyChallenge:
@@ -287,6 +317,7 @@ if __name__ == "__main__":
         admin = create_default_admin()
         instructor = create_default_instructor()
         student = create_default_student()
+        root_admin = create_default_super_admin()
 
         term = create_term()
         

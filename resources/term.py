@@ -14,6 +14,7 @@ from decorators import token_required
 # resource class
 class TermResource():
 
+    # get all terms; intended for tables, indexes, etc. 
     @APP.route('/term', methods=['GET'])
     def get_all_term():
 
@@ -33,6 +34,7 @@ class TermResource():
 
         return jsonify(output)
     
+    # gets individual terms by id
     @APP.route('/term/<id>', methods=['GET'])
     def get_by_id_term(id):
 
@@ -51,6 +53,16 @@ class TermResource():
 
         return jsonify(item_data)
     
+    # used to create a term object in the database
+    # expected format is
+    """
+
+    {
+        "school_year_start": "yyyy-mm-dd"
+        "school_year_end": "yyyy-mm-dd"
+    }
+    
+    """
     @APP.route('/term', methods=['POST'])
     def create_term():
 
@@ -84,6 +96,16 @@ class TermResource():
 
         return jsonify({"message": "term_deleted"})
     
+
+    # updates the term; expected format below
+    """
+
+    {
+        "school_year_start": "yyyy-mm-dd"
+        "school_year_end": "yyyy-mm-dd"
+    }
+    
+    """
     @APP.route('/term/<id>', methods=['PUT'])
     def update_term(id):
 
@@ -98,6 +120,8 @@ class TermResource():
 
         return jsonify({"message":"term updated"})
 
+
+    # gets the term's quizzes; expected output format below
     @APP.route('/term/<id>/quizzes', methods=['GET'])
     def get_term_quizzes(id):
 

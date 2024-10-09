@@ -1,0 +1,6 @@
+mysqlclient
+sqlalchemy
+flask
+marshmallow
+Flask-RESTful
+psycopg2
