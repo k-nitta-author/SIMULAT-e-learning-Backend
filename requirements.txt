@@ -4,3 +4,4 @@ flask
 marshmallow
 Flask-RESTful
 psycopg2
+PyJwt
