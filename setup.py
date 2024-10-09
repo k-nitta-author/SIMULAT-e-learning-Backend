@@ -43,8 +43,8 @@ def add_to_session(func):
         obj = func()
 
 
-        session.add(obj)
-        session.commit()
+        SESSION.add(obj)
+        SESSION.commit()
 
 
     return wrap
