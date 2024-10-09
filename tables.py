@@ -1,9 +1,10 @@
 import enum
 
-from config import connection_string
 from typing import List 
 
 from datetime import date
+from os import environ
+
 
 from sqlalchemy import create_engine, Enum, String, ForeignKey, CheckConstraint
 
@@ -15,7 +16,7 @@ from sqlalchemy.orm import relationship
 
 from werkzeug.security import check_password_hash
 
-engine = create_engine(connection_string)
+engine = create_engine(environ.get("CONNECTION_STRING"))
 
 BASE = declarative_base()
 

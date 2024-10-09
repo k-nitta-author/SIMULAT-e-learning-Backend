@@ -6,6 +6,8 @@ from flask import Flask, request, jsonify, make_response
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
+from os import environ
+from setup import setup_db
 
 from resources.user import UserResource
 from resources.course import CourseResource
@@ -23,7 +25,7 @@ from resources.term import TermResource
 
 from setup import APP
 
-APP.config['SECRET KEY'] = 'SECRET'
+APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 
 user_resource = UserResource()
 course_resource = CourseResource()
@@ -42,12 +44,9 @@ assignment_score_res = AssignmentScoreResource()
 badge_res = BadgeResource()
 term_res = TermResource()
 
-
-@APP.route('/')
-def hello_world():
-    return 'Hello, World!'
-
 if __name__ == '__main__':
+
+    setup_db()
     
     APP.run(debug=True, host='0.0.0.0')
 

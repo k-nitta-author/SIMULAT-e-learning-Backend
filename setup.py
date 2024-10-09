@@ -70,6 +70,7 @@ def create_default_admin() -> User:
     ad_user.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     ad_user.is_super_admin = False
+    ad_user.active = True
 
     return ad_user
 
@@ -136,6 +137,7 @@ def create_default_student() -> User:
     default_student.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     default_student.is_super_admin = False
+    default_student.active = True
 
     return default_student
 
@@ -161,6 +163,8 @@ def create_default_instructor() -> User:
     default_instructor.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     default_instructor.is_super_admin = False
+    default_instructor.active = True
+
 
     return default_instructor
 
@@ -185,6 +189,8 @@ def create_default_super_admin() -> User:
     super_admin.password = generate_password_hash("password", method='pbkdf2:sha256')
 
     super_admin.is_super_admin = True
+    super_admin.active = True
+
 
     return super_admin
 
@@ -308,9 +314,7 @@ def create_term() -> Term:
 
     return t
 
-if __name__ == "__main__":
-    
-
+def setup_db():
     engine = create_engine(connection_string)
     with Session(engine) as session:
 
@@ -340,3 +344,8 @@ if __name__ == "__main__":
         badge = create_default_badge()
 
         session.commit()
+
+if __name__ == "__main__":
+    setup_db()
+
+
