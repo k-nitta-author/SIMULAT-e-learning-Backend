@@ -45,8 +45,6 @@ badge_res = BadgeResource()
 term_res = TermResource()
 
 if __name__ == '__main__':
-
-    setup_db()
     
     APP.run(debug=True, host='0.0.0.0')
 

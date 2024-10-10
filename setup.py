@@ -43,8 +43,8 @@ def add_to_session(func):
         obj = func()
 
 
-        SESSION.add(obj)
-        SESSION.commit()
+        session.add(obj)
+        session.commit()
 
 
     return wrap
@@ -314,7 +314,8 @@ def create_term() -> Term:
 
     return t
 
-def setup_db():
+
+if __name__ == "__main__":
     engine = create_engine(connection_string)
     with Session(engine) as session:
 
@@ -344,8 +345,4 @@ def setup_db():
         badge = create_default_badge()
 
         session.commit()
-
-if __name__ == "__main__":
-    setup_db()
-
 
