@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 
-from config import connection_string
+from os import environ
 
 from tables import User
 from tables import Course
@@ -28,7 +28,7 @@ from flask import Flask
 from werkzeug.security import generate_password_hash
 
 
-ENGINE = create_engine(connection_string)
+ENGINE = create_engine(environ.get("CONNECTION_STRING"))
 session = sessionmaker(bind=ENGINE)
 
 SESSION = session()
