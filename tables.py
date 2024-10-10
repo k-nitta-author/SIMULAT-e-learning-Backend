@@ -354,7 +354,7 @@ class StudyGroupMembership(BASE):
     
 
 if __name__ == "__main__":
-    engine = create_engine(connection_string)
+    engine = create_engine(environ.get("CONNECTION_STRING"))
 
     with Session(engine) as session:
         BASE.metadata.create_all(engine)

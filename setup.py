@@ -316,7 +316,7 @@ def create_term() -> Term:
 
 
 if __name__ == "__main__":
-    engine = create_engine(connection_string)
+    engine = create_engine(environ.get("CONNECTION_STRING"))
     with Session(engine) as session:
 
         admin = create_default_admin()
