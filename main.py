@@ -7,7 +7,6 @@ import jwt
 from functools import wraps
 from datetime import datetime, timedelta
 from os import environ
-from setup import setup_db
 
 from resources.user import UserResource
 from resources.course import CourseResource
