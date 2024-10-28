@@ -36,7 +36,7 @@ class User(BASE):
     name_given: Mapped[str] = mapped_column(String(30))
     name_last: Mapped[str] = mapped_column(String(30))
     email: Mapped[str] = mapped_column(String(30), unique=True)
-    gender: Mapped[int] = mapped_column(Enum(Gender))
+    gender: Mapped[int] = mapped_column(String(30))
     
     # user's login credentials
     # user is meant to login to the login api call to gain token
