@@ -361,6 +361,7 @@ if __name__ == "__main__":
 
         try:
             User.__table__.create(bind=engine)
+            Term.__table__.create(bind=engine)
             Quiz.__table__.create(bind=engine)
             Term.__table__.create(bind=engine)
             LessonMaterial.__table__.create(bind=engine)
