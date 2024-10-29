@@ -358,7 +358,6 @@ if __name__ == "__main__":
     engine = create_engine(environ.get("CONNECTION_STRING"))
 
     with Session(engine) as session:
-        BASE.metadata.create_all(engine)
 
         try:
             User.__table__.create(bind=engine)
