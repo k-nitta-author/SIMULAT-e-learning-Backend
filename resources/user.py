@@ -49,7 +49,7 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender.name
+                "gender": item.gender
             }
 
             output.append(item_data)
@@ -80,7 +80,7 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender.name
+                "gender": item.gender
             }
 
 
@@ -112,7 +112,7 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender.name
+                "gender": item.gender
             }
 
             output.append(item_data)
@@ -144,7 +144,7 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender.name
+                "gender": item.gender
             }
 
             output.append(item_data)
@@ -188,7 +188,7 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender.name
+                "gender": item.gender
             }
 
             output.append(item_data)

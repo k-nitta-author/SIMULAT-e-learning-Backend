@@ -61,7 +61,7 @@ def create_default_admin() -> User:
     ad_user.is_instructor= False
     ad_user.is_admin= True
 
-    ad_user.gender = Gender.male
+    ad_user.gender = "Male"
 
     ad_user.progress_score = 0
 
@@ -125,7 +125,7 @@ def create_default_student() -> User:
     default_student.name_given = "John"
     default_student.name_last = "Fakename"
 
-    default_student.gender = Gender.male
+    default_student.gender = "Male"
 
     default_student.is_student = True
     default_student.is_instructor= False
@@ -149,7 +149,7 @@ def create_default_instructor() -> User:
     default_instructor.name_given = "John"
     default_instructor.name_last = "teacherman"
 
-    default_instructor.gender = Gender.male
+    default_instructor.gender = "Male"
 
 
     default_instructor.is_student = False
@@ -176,7 +176,7 @@ def create_default_super_admin() -> User:
     super_admin.name_given = "Sanson"
     super_admin.name_last = "Alba"
 
-    super_admin.gender = Gender.female
+    super_admin.gender = "Female"
 
 
     super_admin.is_student = False
