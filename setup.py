@@ -37,16 +37,11 @@ APP = Flask(__name__)
 APP.secret_key = "secret_key"
 
 def add_to_session(func):
-    
-
     def wrap(*args, **kwargs):
-        obj = func()
-
-
-        session.add(obj)
-        session.commit()
-
-
+        obj = func(*args, **kwargs)
+        SESSION.add(obj)  # use SESSION instance instead of sessionmaker object
+        SESSION.commit()
+        return obj
     return wrap
 
 @add_to_session

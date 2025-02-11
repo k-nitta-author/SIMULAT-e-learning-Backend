@@ -360,21 +360,21 @@ if __name__ == "__main__":
     with Session(engine) as session:
 
         try:
+            # Order adjusted to ensure dependency: Term is created before tables that reference it
             User.__table__.create(bind=engine)
-            Course.__table__.create(bind=engine)
-            CourseEnrollment.__table__.create(bind=engine)
-            Content.__table__.create(bind=engine)
             Term.__table__.create(bind=engine)
-            
-            Quiz.__table__.create(bind=engine)
+            Badge.__table__.create(bind=engine)
+            Course.__table__.create(bind=engine)
+            Content.__table__.create(bind=engine)
             LessonMaterial.__table__.create(bind=engine)
             Assignment.__table__.create(bind=engine)
+            Quiz.__table__.create(bind=engine)
             AssignmentScore.__table__.create(bind=engine)
+            QuizScore.__table__.create(bind=engine)
+            CourseEnrollment.__table__.create(bind=engine)
             DailyChallenge.__table__.create(bind=engine)
             DailyChallengeScore.__table__.create(bind=engine)
-            
             BulletinPost.__table__.create(bind=engine)
-            Badge.__table__.create(bind=engine)
             StudyGroup.__table__.create(bind=engine)
             StudyGroupMembership.__table__.create(bind=engine)
 
