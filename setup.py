@@ -316,33 +316,26 @@ def create_term() -> Term:
 
 
 if __name__ == "__main__":
-    engine = create_engine(environ.get("CONNECTION_STRING"))
-    with Session(engine) as session:
-
+    try:
         admin = create_default_admin()
         instructor = create_default_instructor()
         student = create_default_student()
         root_admin = create_default_super_admin()
-
         term = create_term()
-        
         course = create_course()
         enrollment = create_course_enrollment()
-
         content = create_default_content()
-
         assignment = create_default_assignment()
         assignment_score = create_assignment_score()
-
         quiz = create_quiz()
         quiz_score = create_quiz_score()
-
         challenge = create_default_challenge()
         challenge_score = create_daily_challenge_score()
-        
         lesson_material = create_default_lesson()
-
         badge = create_default_badge()
 
-        session.commit()
+        SESSION.commit()
+    except Exception as e:
+        SESSION.rollback()
+        print(e)
 

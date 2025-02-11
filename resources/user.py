@@ -39,7 +39,7 @@ class UserResource():
 
                 "id": item.id,
                 "name_given": item.name_given,
-                "name_last": item.name_given,
+                "name_last": item.name_last,
                 "email": item.email,
                 "username": item.username,
                 "password": item.password,
@@ -70,7 +70,7 @@ class UserResource():
 
                 "id": item.id,
                 "name_given": item.name_given,
-                "name_last": item.name_given,
+                "name_last": item.name_last,
                 "email": item.email,
                 "username": item.username,
                 "password": item.password,
@@ -102,7 +102,7 @@ class UserResource():
 
                 "id": item.id,
                 "name_given": item.name_given,
-                "name_last": item.name_given,
+                "name_last": item.name_last,
                 "email": item.email,
                 "username": item.username,
                 "password": item.password,
@@ -134,7 +134,7 @@ class UserResource():
 
                 "id": item.id,
                 "name_given": item.name_given,
-                "name_last": item.name_given,
+                "name_last": item.name_last,
                 "email": item.email,
                 "username": item.username,
                 "password": item.password,
@@ -178,7 +178,7 @@ class UserResource():
 
                 "id": item.id,
                 "name_given": item.name_given,
-                "name_last": item.name_given,
+                "name_last": item.name_last,
                 "email": item.email,
                 "username": item.username,
                 "password": item.password,
