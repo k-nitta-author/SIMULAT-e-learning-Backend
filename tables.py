@@ -361,15 +361,18 @@ if __name__ == "__main__":
 
         try:
             User.__table__.create(bind=engine)
+            Course.__table__.create(bind=engine)
+            CourseEnrollment.__table__.create(bind=engine)
+            Content.__table__.create(bind=engine)
             Term.__table__.create(bind=engine)
+            
             Quiz.__table__.create(bind=engine)
-            Term.__table__.create(bind=engine)
             LessonMaterial.__table__.create(bind=engine)
             Assignment.__table__.create(bind=engine)
             AssignmentScore.__table__.create(bind=engine)
             DailyChallenge.__table__.create(bind=engine)
             DailyChallengeScore.__table__.create(bind=engine)
-            Content.__table__.create(bind=engine)
+            
             BulletinPost.__table__.create(bind=engine)
             Badge.__table__.create(bind=engine)
             StudyGroup.__table__.create(bind=engine)
@@ -377,5 +380,7 @@ if __name__ == "__main__":
 
         # currently checks if there was a duplicate table error
         except ProgrammingError as e:
+
+            session.rollback()
 
             print(e._message)
