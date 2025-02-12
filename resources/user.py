@@ -227,15 +227,15 @@ class UserResource():
         except IntegrityError:
 
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": "invalid input - integrity error"}), 400
         
         except PendingRollbackError:
             
             SESSION.rollback()
 
-            return jsonify({"message": "invalid input - PendingRollbackError"})
+            return jsonify({"message": "invalid input - PendingRollbackError"}), 400
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "user_created"}), 201
     
 
     # allows one to delete a user
@@ -266,6 +266,9 @@ class UserResource():
 
         u = SESSION.query(table).filter(table.id == id).first()
 
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
         u.email = data["email"]
         u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
@@ -275,7 +278,7 @@ class UserResource():
         SESSION.add(u)
         SESSION.commit()
 
-        return jsonify({"message":"user updated"})
+        return jsonify({"message":"user updated"}), 200
     
     # grants or takes away user priveliges to users
     # requires admin level access before proceeding
@@ -287,6 +290,9 @@ class UserResource():
 
         u = SESSION.query(table).filter(table.id == id).first()
 
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
         u.is_admin = data["is_admin"]
         u.is_instructor = data["is_instructor"]
         u.is_student = data["is_student"]
@@ -295,7 +301,7 @@ class UserResource():
         SESSION.add(u)
         SESSION.commit()
 
-        return jsonify({"message":"user updated"})
+        return jsonify({"message":"user privileges updated"}), 200
     
     # gets the user's quiz scores if they have any
     @APP.route('/user/<id>/q/scores', methods=['GET'])
