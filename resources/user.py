@@ -422,6 +422,6 @@ class UserResource():
                 'exp': datetime.now() + timedelta(seconds=10),
                 'roles': table.get_roles_list(u)}, APP.secret_key)
 
-            return token
+            return jsonify({"token": token, "user_id": u.id}), 200
         
         return jsonify({"message": "invalid user credentials"})
