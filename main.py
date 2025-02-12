@@ -22,7 +22,13 @@ from resources.assignment_score import AssignmentScoreResource
 from resources.badge import BadgeResource
 from resources.term import TermResource
 
+from flask_cors import CORS
+
+
 from setup import APP
+
+# enable cors
+cors = CORS(APP, resources={r"/*": {"origins": "*"}})
 
 APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 
@@ -42,6 +48,8 @@ assignment_score_res = AssignmentScoreResource()
 
 badge_res = BadgeResource()
 term_res = TermResource()
+
+
 
 if __name__ == '__main__':
     
