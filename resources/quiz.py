@@ -71,8 +71,12 @@ class QuizResource():
         q.is_published = False
 
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message": "user_created"})
     
@@ -83,8 +87,12 @@ class QuizResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.add(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message": "user_deleted"})
     
@@ -101,8 +109,11 @@ class QuizResource():
         q.time_limit = data["time_limit"]
         q.is_published = data["is_published"]
         
-        SESSION.commit()
-
+        try:
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
         return jsonify({"message":"user updated"})
     
 
@@ -113,6 +124,10 @@ class QuizResource():
 
         q.is_published = True
         
-        SESSION.commit()
-
+        try:
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        
         return jsonify({"message":"user updated"})
