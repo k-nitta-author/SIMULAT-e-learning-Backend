@@ -24,6 +24,7 @@ class QuizResource():
 
                 "id": item.id,
                 "content_id": item.content_id,
+                "term_id": item.term_id,
                 "quiz_title": item.quiz_title,
                 "quiz_title": item.quiz_title,
                 "description": item.description,
@@ -47,6 +48,7 @@ class QuizResource():
 
                 "id": item.id,
                 "content_id": item.content_id,
+                "term_id": item.term_id,
                 "quiz_title": item.quiz_title,
                 "quiz_title": item.quiz_title,
                 "description": item.description,
@@ -89,7 +91,7 @@ class QuizResource():
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
         try:
-            SESSION.add(item)
+            SESSION.delete(item)
             SESSION.commit()
         except Exception as e:
             SESSION.rollback()
@@ -106,6 +108,7 @@ class QuizResource():
 
         q.content_id = data["content_id"]
         q.quiz_title = data["quiz_title"]
+        q.term_id = data["term_id"]
         q.description = data["description"]
         q.time_limit = data["time_limit"]
         q.is_published = data["is_published"]
