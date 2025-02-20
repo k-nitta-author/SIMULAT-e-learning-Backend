@@ -65,6 +65,7 @@ class QuizResource():
         q = table()
 
         q.content_id = data["content_id"]
+        q.term_id = data["term_id"]
         q.quiz_title = data["quiz_title"]
         q.description = data["description"]
         q.time_limit = data["time_limit"]
