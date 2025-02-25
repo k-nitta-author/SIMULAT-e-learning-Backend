@@ -12,14 +12,12 @@ class CourseEnrollmentResource():
     def get_all_enrollments(user_id):
 
 
-        result = SESSION.query(table).filter(table.user_id == user_id).all()
+        result = SESSION.query(table).order_by("course_id").filter(table.user_id == user_id).all()
 
 
         output = []
 
         for item in result:
-            print(item)
-
             item_data = {
 
                 "enroll_date": item.enroll_date,

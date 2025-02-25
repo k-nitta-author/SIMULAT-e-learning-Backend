@@ -12,14 +12,12 @@ class QuizScoreResource():
     def get_all_quiz_scores():
 
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
 
         output = []
 
         for item in result:
-            print(item)
-
             item_data = {
                 "score": item.score,
                 "submission_date": item.submission_date,

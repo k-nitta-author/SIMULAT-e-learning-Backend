@@ -14,7 +14,7 @@ class CourseResource():
 
     @APP.route('/course', methods=['GET'])
     def course_get_all():
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         print(result)
 
@@ -77,29 +77,34 @@ class CourseResource():
         c.course_name = data["course_name"]
         c.description = data["description"]
         c.instructor_id = data["instructor_id"]
-        c.is_published = data["is_published"]
-        c.created_at = datetime.now()
         c.is_published = False
+        c.created_at = datetime.now()
         c.updated_at = datetime.now()
 
-        SESSION.add(c)
-        SESSION.commit()
+        try:
+            SESSION.add(c)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "course_created"}), 201
     
     @APP.route('/course/<id>', methods=['DELETE'])
     def course_delete(id):
 
         item = SESSION.query(table).filter(table.id == id).first()
 
-        if not item: return jsonify({"Message":"No User by ID"}), 404
+        if not item: return jsonify({"Message":"No Course by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        
-
-        return jsonify({"message": "user_deleted"})
+        return jsonify({"message": "course_deleted"})
     
     @APP.route('/course/<id>', methods=['PUT'])
     def course_update(id):
@@ -119,9 +124,8 @@ class CourseResource():
         try:        
             SESSION.add(c)
             SESSION.commit()
-        except IntegrityError:
+        except Exception as e:
             SESSION.rollback()
-            return jsonify({"message":"something went wrong"})
+            return jsonify({"message":"something went wrong", "error": str(e)}), 500
 
-        return jsonify({"message":"user updated"})
-    
+        return jsonify({"message":"course updated"})

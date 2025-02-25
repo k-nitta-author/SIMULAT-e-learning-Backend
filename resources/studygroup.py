@@ -18,7 +18,7 @@ class AssignmentResource():
     def get_all_studygroup():
 
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         output = []
 
@@ -68,12 +68,12 @@ class AssignmentResource():
             SESSION.add(q)
             SESSION.commit()
 
-        except IntegrityError:
+        except Exception as e:
 
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": "invalid input", "error": str(e)}), 400
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "studygroup_created"}), 201
     
     @APP.route('/studygroup/<id>', methods=['DELETE'])
     def delete_bulletin(id):
@@ -82,8 +82,12 @@ class AssignmentResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
         
         return jsonify({"message": "studygroup_deleted"})
     
@@ -95,7 +99,11 @@ class AssignmentResource():
         q = SESSION.query(table).filter(table.id == id).first()
 
 
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"studygroup updated"})

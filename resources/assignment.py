@@ -15,7 +15,7 @@ class AssignmentResource():
     @APP.route('/assignment', methods=['GET'])
     def get_all_assignment():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         output = []
 
@@ -99,33 +99,32 @@ class AssignmentResource():
     
     @APP.route('/assignment/<id>', methods=['DELETE'])
     def delete_assignment(id):
-
         item = SESSION.query(table).filter(table.id == id).first()
-
-        if not item: return jsonify({"Message":"No User by ID"}), 404
-
-        SESSION.delete(item)
-        SESSION.commit()
-        
-        return jsonify({"message": "user_deleted"})
+        if not item:
+            return jsonify({"Message": "No assignment by ID"}), 404
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        return jsonify({"message": "assignment_deleted"})
     
     @APP.route('/assignment/<id>', methods=['PUT'])
     def update_assignment(id):
-
         data = request.get_json()
-
         q = SESSION.query(table).filter(table.id == id).first()
-
         q.content_id = data["content_id"]
         q.assignment_title = data["assignment_title"]
         q.description = data["description"]
         q.deadline = data["deadline"]
-        q.created_at = datetime().now()
+        q.created_at = datetime.now()  # corrected usage
         q.submission_format = data["submission_format"]
-        q.updated_at = datetime().now()
-        
-        SESSION.add(q)
-        SESSION.commit()
-
-        return jsonify({"message":"user updated"})
-    
+        q.updated_at = datetime.now()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        return jsonify({"message": "assignment updated"})

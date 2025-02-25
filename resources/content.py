@@ -12,7 +12,7 @@ class ContentResource():
     @APP.route('/content', methods=['GET'])
     def get_all_content():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         output = []
 
@@ -69,10 +69,14 @@ class ContentResource():
         q.term_id = data["term_id"]
         q.type =  data["type"]
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "content_created"}), 201
     
     @APP.route('/content/<id>', methods=['DELETE'])
     def delete_content(id):
@@ -81,10 +85,14 @@ class ContentResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message": "user_deleted"})
+        return jsonify({"message": "content_deleted"})
     
     @APP.route('/content/<id>', methods=['PUT'])
     def update_content(id):
@@ -100,8 +108,11 @@ class ContentResource():
         q.created_at = data["created_at"]
         q.term_id = data["term_id"]
 
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"user updated"})
-    
+        return jsonify({"message":"content updated"})

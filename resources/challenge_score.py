@@ -13,7 +13,7 @@ class DailyChallengeScoreResource():
     @APP.route('/challenge/<challenge_id>/score', methods=['GET'])
     def get_by_challenge_challenge_score(challenge_id):
 
-        result = SESSION.query(table).filter(table.challenge_id == challenge_id).all()
+        result = SESSION.query(table).filter(table.challenge_id == challenge_id).order_by("challenge_id").all()
 
         if not result: return jsonify({"Message":"No User by ID"}), 404
 
@@ -38,7 +38,7 @@ class DailyChallengeScoreResource():
     @APP.route('/challenge/u/<user_id>/score', methods=['GET'])
     def get_by_user_challenge_score(user_id):
 
-        result = SESSION.query(table).filter(table.user_id == user_id).all()
+        result = SESSION.query(table).filter(table.user_id == user_id).order_by("user_id").all()
 
         if not result: return jsonify({"Message":"No User by ID"}), 404
 
@@ -69,19 +69,19 @@ class DailyChallengeScoreResource():
 
         q.score= data["score"]
         q.submission_date= datetime.now()
-        q.challenge_id= id,
+        q.challenge_id= id
         q.user_id= data["user_id"]
         
         try:
             SESSION.add(q)
             SESSION.commit()
 
-        except IntegrityError:
+        except Exception as e:
 
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": "invalid input", "error": str(e)}), 400
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "challenge_score_created"}), 201
     
     @APP.route('/challenge/<id>/score', methods=['DELETE'])
     def delete_challenge_score(id):
@@ -90,10 +90,14 @@ class DailyChallengeScoreResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
         
-        return jsonify({"message": "user_deleted"})
+        return jsonify({"message": "challenge_score_deleted"})
     
     @APP.route('/challenge/<id>/score', methods=['PUT'])
     def update_challenge_score(id):
@@ -104,11 +108,14 @@ class DailyChallengeScoreResource():
 
         q.score= data["score"]
         q.submission_date= datetime.now()
-        q.challenge_id= data["challenge_id"],
+        q.challenge_id= data["challenge_id"]
         q.user_id= data["user_id"]
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"user updated"})
-    
+        return jsonify({"message":"challenge_score updated"})

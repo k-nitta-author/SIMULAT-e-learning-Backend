@@ -10,7 +10,7 @@ class AssignmentScoreResource():
     @APP.route('/assignment/score', methods=['GET'])
     def get_all_assignment_score():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by("assignment_id").all()
         output = []
 
         for item in result:
@@ -58,10 +58,14 @@ class AssignmentScoreResource():
         q.assignment_id = id
         q.student_id = sid
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "assignment_score_created"}), 201
     
     @APP.route('/assignment/<id>/score', methods=['DELETE'])
     def delete_assignment_score(id):
@@ -70,10 +74,14 @@ class AssignmentScoreResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
         
-        return jsonify({"message": "user_deleted"})
+        return jsonify({"message": "assignment_score_deleted"})
     
     @APP.route('/assignment/<id>/score', methods=['PUT'])
     def update_assignment_score(id):
@@ -87,8 +95,11 @@ class AssignmentScoreResource():
         q.assignment_id = data["assignment_id"]
         q.student_id = data["student_id"]
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"user updated"})
-    
+        return jsonify({"message":"assignment_score updated"})

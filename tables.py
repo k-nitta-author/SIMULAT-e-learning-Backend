@@ -123,8 +123,8 @@ class QuizScore(BASE):
     score: Mapped[int]
     submission_date: Mapped[date]
 
-    # FOREIGN KEY COLUMNS
-    quiz_id: Mapped[int] = mapped_column(ForeignKey("quiz.id"), primary_key=True)
+    # FOREIGN KEY COLUMNS with cascade deletion so that deleting a quiz also removes its quiz scores
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quiz.id", ondelete="CASCADE"), primary_key=True)
     student_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
     user: Mapped[List["User"]] = relationship(back_populates="quiz_scores")

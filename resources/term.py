@@ -18,7 +18,7 @@ class TermResource():
     @APP.route('/term', methods=['GET'])
     def get_all_term():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(table.school_year_start).all()
 
         output = []
 
@@ -76,13 +76,11 @@ class TermResource():
         try:
             SESSION.add(q)
             SESSION.commit()
-
-        except IntegrityError:
-
+        except Exception as e:
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": "invalid input", "error": str(e)}), 400
 
-        return jsonify({"message": "term_created"})
+        return jsonify({"message": "term_created"}), 201
     
     @APP.route('/term/<id>', methods=['DELETE'])
     def delete_term(id):
@@ -91,8 +89,12 @@ class TermResource():
 
         if not item: return jsonify({"Message":"No term by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message": "term_deleted"})
     
@@ -116,7 +118,11 @@ class TermResource():
         q.school_year_start = data['school_year_start']
         q.school_year_end = data['school_year_end']
 
-        SESSION.commit()
+        try:
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"term updated"})
 

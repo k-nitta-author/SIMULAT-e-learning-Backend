@@ -13,7 +13,7 @@ class DailyChallengeResource():
     @APP.route('/challenge', methods=['GET'])
     def get_all_challenge():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         output = []
 
@@ -72,12 +72,12 @@ class DailyChallengeResource():
             SESSION.add(q)
             SESSION.commit()
 
-        except IntegrityError:
+        except Exception as e:
 
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": "invalid input", "error": str(e)}), 400
 
-        return jsonify({"message": "user_created"}), 201
+        return jsonify({"message": "challenge_created"}), 201
     
     @APP.route('/challenge/<id>', methods=['DELETE'])
     def delete_challenge(id):
@@ -86,10 +86,14 @@ class DailyChallengeResource():
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
 
-        SESSION.delete(item)
-        SESSION.commit()
+        try:
+            SESSION.delete(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
         
-        return jsonify({"message": "user_deleted"})
+        return jsonify({"message": "challenge_deleted"})
     
     @APP.route('/challenge/<id>', methods=['PUT'])
     def update_challenge(id):
@@ -103,8 +107,11 @@ class DailyChallengeResource():
         q.is_published= data["is_published"]
         q.updated_at= datetime.now()
         
-        SESSION.add(q)
-        SESSION.commit()
+        try:
+            SESSION.add(q)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"user updated"})
-    
+        return jsonify({"message":"challenge updated"})

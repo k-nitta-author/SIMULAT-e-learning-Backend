@@ -29,7 +29,7 @@ class UserResource():
     @APP.route('/user', methods=['GET'])
     def get_all():
 
-        result = SESSION.query(table).all()
+        result = SESSION.query(table).order_by(id).all()
 
         output = []
 
@@ -61,29 +61,28 @@ class UserResource():
     # intended for user profile pages, etc. 
     @APP.route('/user/<id>', methods=['GET'])
     def get_by_id(id):
+        try:
+            item = SESSION.query(table).filter(table.id == id).first()
+        except Exception as e:
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        item = SESSION.query(table).filter(table.id == id).first()
-
-        if not item: return jsonify({"Message":"No User by ID"}), 404
+        if not item:
+            return jsonify({"message": "No user by ID"}), 404
 
         item_data = {
-
-                "id": item.id,
-                "name_given": item.name_given,
-                "name_last": item.name_last,
-                "email": item.email,
-                "username": item.username,
-                "password": item.password,
-                "username": item.username,
-                "is_admin": item.is_admin,
-                "is_super_admin": item.is_super_admin,
-                "is_student": item.is_student,
-                "is_instructor": item.is_instructor,
-                "progress_score": item.progress_score,
-                "gender": item.gender
-            }
-
-
+            "id": item.id,
+            "name_given": item.name_given,
+            "name_last": item.name_last,
+            "email": item.email,
+            "username": item.username,
+            "password": item.password,
+            "is_admin": item.is_admin,
+            "is_super_admin": item.is_super_admin,
+            "is_student": item.is_student,
+            "is_instructor": item.is_instructor,
+            "progress_score": item.progress_score,
+            "gender": item.gender
+        }
         return jsonify(item_data)
     
     # gets all instructors
@@ -251,8 +250,12 @@ class UserResource():
 
         item.active = False
 
-        SESSION.add(item)
-        SESSION.commit()
+        try:
+            SESSION.add(item)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message": "user_deleted"})
     
@@ -275,8 +278,12 @@ class UserResource():
         u.name_given= data["name_given"]
         u.name_last = data["name_last"]
         
-        SESSION.add(u)
-        SESSION.commit()
+        try:
+            SESSION.add(u)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"user updated"}), 200
     
@@ -298,8 +305,12 @@ class UserResource():
         u.is_student = data["is_student"]
         u.is_super_admin = data["is_super_admin"]
         
-        SESSION.add(u)
-        SESSION.commit()
+        try:
+            SESSION.add(u)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"user privileges updated"}), 200
     
