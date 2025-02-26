@@ -12,7 +12,7 @@ class ContentResource():
     @APP.route('/content', methods=['GET'])
     def get_all_content():
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 
