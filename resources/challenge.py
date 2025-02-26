@@ -13,7 +13,7 @@ class DailyChallengeResource():
     @APP.route('/challenge', methods=['GET'])
     def get_all_challenge():
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 

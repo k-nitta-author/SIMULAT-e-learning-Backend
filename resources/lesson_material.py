@@ -12,7 +12,7 @@ class LessonMaterialResource():
     def get_all_lesson_material():
 
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
 
         output = []

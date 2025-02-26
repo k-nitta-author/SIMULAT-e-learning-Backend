@@ -15,7 +15,7 @@ class AssignmentResource():
     @APP.route('/assignment', methods=['GET'])
     def get_all_assignment():
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 

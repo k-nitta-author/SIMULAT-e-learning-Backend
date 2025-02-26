@@ -29,7 +29,7 @@ class UserResource():
     @APP.route('/user', methods=['GET'])
     def get_all():
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 

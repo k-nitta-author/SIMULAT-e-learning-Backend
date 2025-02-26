@@ -12,7 +12,7 @@ class QuizScoreResource():
     def get_all_quiz_scores():
 
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
 
         output = []

@@ -14,7 +14,7 @@ class CourseResource():
 
     @APP.route('/course', methods=['GET'])
     def course_get_all():
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         print(result)
 

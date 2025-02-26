@@ -15,7 +15,7 @@ class BadgeResource():
     @APP.route('/badge', methods=['GET'])
     def get_all_badge():
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 

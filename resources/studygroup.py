@@ -18,7 +18,7 @@ class AssignmentResource():
     def get_all_studygroup():
 
 
-        result = SESSION.query(table).order_by(id).all()
+        result = SESSION.query(table).order_by(table.id).all()
 
         output = []
 
