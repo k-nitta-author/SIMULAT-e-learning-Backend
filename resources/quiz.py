@@ -50,6 +50,7 @@ class QuizResource():
                 "quiz_title": item.quiz_title,
                 "quiz_title": item.quiz_title,
                 "description": item.description,
+                "term": item.term.school_year_start.strftime("%Y") + ' - ' + item.term.school_year_end.strftime("%Y"),
                 "time_limit": item.time_limit,
                 "is_published": item.is_published,
             }

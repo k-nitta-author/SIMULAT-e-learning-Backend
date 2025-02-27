@@ -14,7 +14,6 @@ class LessonMaterialResource():
 
         result = SESSION.query(table).order_by(table.id).all()
 
-
         output = []
 
         for item in result:

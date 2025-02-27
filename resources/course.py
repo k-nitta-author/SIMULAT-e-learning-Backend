@@ -80,6 +80,7 @@ class CourseResource():
         c.is_published = False
         c.created_at = datetime.now()
         c.updated_at = datetime.now()
+        c.term_id = data["term_id"]
 
         try:
             SESSION.add(c)
