@@ -110,6 +110,12 @@ class Quiz(BASE):
     time_limit: Mapped[float]
     is_published: Mapped[bool]
 
+
+    # relationships with other tables
+
+    # the scores the individual quizzes have
+    quiz_scores: Mapped[List["QuizScore"]] = relationship(back_populates="quiz")
+
     # the term during which the quiz released
     term_id: Mapped[int] = mapped_column(ForeignKey("term.id"))
 
@@ -128,6 +134,8 @@ class QuizScore(BASE):
     student_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
     user: Mapped[List["User"]] = relationship(back_populates="quiz_scores")
+
+    quiz: Mapped[List["Quiz"]] = relationship(back_populates="quiz_scores")
 
 
 # The Term table
