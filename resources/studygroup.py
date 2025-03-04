@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from decorators import token_required
 
 # resource class
-class AssignmentResource():
+class StudyGroupResource():
 
     @APP.route('/studygroup', methods=['GET'])
     def get_all_studygroup():

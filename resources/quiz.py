@@ -48,11 +48,11 @@ class QuizResource():
                 "content_id": item.content_id,
                 "term_id": item.term_id,
                 "quiz_title": item.quiz_title,
-                "quiz_title": item.quiz_title,
                 "description": item.description,
                 "term": item.term.school_year_start.strftime("%Y") + ' - ' + item.term.school_year_end.strftime("%Y"),
                 "time_limit": item.time_limit,
                 "is_published": item.is_published,
+                "quiz_scores": [{"student_id": score.student_id, "score": score.score, "submission_date": score.submission_date.strftime("%Y-%m-%d")} for score in item.quiz_scores],
             }
 
 

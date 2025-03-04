@@ -172,6 +172,8 @@ class DailyChallenge(BASE):
     content_id: Mapped[int] = mapped_column(ForeignKey("content.id"))
 
     publication_date: Mapped[date] = mapped_column(nullable=True)
+    title: Mapped[str] = mapped_column(String(30))
+    description: Mapped[str] = mapped_column(String(500))
     is_published: Mapped[bool]
     created_at: Mapped[date]
     updated_at: Mapped[date]
@@ -384,3 +386,4 @@ if __name__ == "__main__":
             session.rollback()
 
             print(e._message)
+
