@@ -12,6 +12,8 @@ from decorators import token_required
 # resource class
 class CourseResource():
 
+    # this route accesses all the courses
+
     @APP.route('/course', methods=['GET'])
     def course_get_all():
         result = SESSION.query(table).order_by(table.id).all()
@@ -42,6 +44,7 @@ class CourseResource():
 
         return jsonify(output)
 
+    # this route accesses a specific course
     @APP.route('/course/<id>', methods=['GET'])
     def course_get_by_id(id):
 
@@ -59,13 +62,18 @@ class CourseResource():
                 "is_published": item.is_published,
                 "created_at": item.created_at,
                 "updated_at": item.updated_at,
-                "instructor": f"{item.instructor.name_given} {item.instructor.name_last}"
+                "instructor": f"{item.instructor.name_given} {item.instructor.name_last}",
+                "term": item.term_id,
+                "content_list": [{"id": c.id, "title": c.title, "url": c.url} for c in item.content_list],
+                "enrollments": [{"id": ce.id, "course_id": ce.course_id, "user_id": ce.user_id, "enroll_date": ce.enroll_date} for ce in item.enrollments],
+                "study_groups": [{"id": sg.id, "name": sg.name, "course_id": sg.course_id, "max_members": sg.max_members} for sg in item.study_groups]
             }
 
 
         return jsonify(item_data)
 
 
+    # this route creates a course
     @APP.route('/course', methods=['POST'])
     def course_create():
 
@@ -91,6 +99,7 @@ class CourseResource():
 
         return jsonify({"message": "course_created"}), 201
     
+    # this route deletes a course
     @APP.route('/course/<id>', methods=['DELETE'])
     def course_delete(id):
 
@@ -107,6 +116,7 @@ class CourseResource():
 
         return jsonify({"message": "course_deleted"})
     
+    # this route updates a course
     @APP.route('/course/<id>', methods=['PUT'])
     def course_update(id):
 

@@ -60,6 +60,10 @@ class AssignmentResource():
                 "created_at": item.created_at,
                 "submission_format": item.submission_format,
                 "updated_at": item.updated_at,
+                "term_id": item.term_id,
+                "term": item.term.__dict__,
+                "scores": [score.__dict__ for score in item.scores]
+
             }
 
 
@@ -112,15 +116,18 @@ class AssignmentResource():
     
     @APP.route('/assignment/<id>', methods=['PUT'])
     def update_assignment(id):
+        
         data = request.get_json()
-        q = SESSION.query(table).filter(table.id == id).first()
-        q.content_id = data["content_id"]
-        q.assignment_title = data["assignment_title"]
-        q.description = data["description"]
-        q.deadline = data["deadline"]
-        q.created_at = datetime.now()  # corrected usage
-        q.submission_format = data["submission_format"]
-        q.updated_at = datetime.now()
+        
+        a = SESSION.query(table).filter(table.id == id).first()
+        a.content_id = data["content_id"]
+        a.assignment_title = data["assignment_title"]
+        a.description = data["description"]
+        a.deadline = data["deadline"]
+        a.created_at = datetime.now()  # corrected usage
+        a.submission_format = data["submission_format"]
+        a.updated_at = datetime.now()
+
         try:
             SESSION.add(q)
             SESSION.commit()

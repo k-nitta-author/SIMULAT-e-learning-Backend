@@ -30,6 +30,7 @@ class StudyGroupResource():
                 "course_id": item.course_id,
                 "max_members": item.max_members,
                 "name": item.name,
+                "memberships": [{"student_id": membership.student_id, "join_date": membership.join_date, "is_leader": membership.is_leader} for membership in item.memberships]
             }
 
             output.append(item_data)
@@ -47,7 +48,8 @@ class StudyGroupResource():
                 "id": item.id,
                 "course_id": item.course_id,
                 "max_members": item.max_members,
-                "name": item.name
+                "name": item.name,
+                "memberships": [{"student_id": membership.student_id, "join_date": membership.join_date, "is_leader": membership.is_leader} for membership in item.memberships]
         }
 
 

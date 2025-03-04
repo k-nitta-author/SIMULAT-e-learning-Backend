@@ -50,13 +50,11 @@ class TermResource():
 
             }
 
-
         return jsonify(item_data)
     
     # used to create a term object in the database
     # expected format is
     """
-
     {
         "school_year_start": "yyyy-mm-dd"
         "school_year_end": "yyyy-mm-dd"
@@ -236,12 +234,9 @@ class TermResource():
 
         content = q.content
 
-        print(content)
-
         output = [
 
             {
-
                 "id": item.id,
                 "course_id": item.course_id,
                 "title": item.title,
