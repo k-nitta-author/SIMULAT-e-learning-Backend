@@ -19,6 +19,8 @@ from tables import DailyChallenge
 from tables import DailyChallengeScore
 from tables import Term
 from tables import Badge
+from tables import StudyGroup
+from tables import StudyGroupMembership
 
 from tables import Gender
 
@@ -173,7 +175,6 @@ def create_default_super_admin() -> User:
 
     super_admin.gender = "Female"
 
-
     super_admin.is_student = False
     super_admin.is_instructor= False
     super_admin.is_admin= False
@@ -197,6 +198,8 @@ def create_default_challenge() -> DailyChallenge:
     c.content_id = 1
     c.is_published = False
     c.publication_date = None
+    c.title = "Challenge"
+    c.description = "Challenge"
     c.updated_at = datetime.now()
     c.created_at = datetime.now()
 
@@ -309,6 +312,25 @@ def create_term() -> Term:
 
     return t
 
+@add_to_session
+def create_study_group() -> StudyGroup:
+    sg = StudyGroup()
+    sg.name = "Math Whizzes"
+    sg.course_id = 1
+    sg.max_members = 5
+    
+    return sg
+
+@add_to_session
+def create_study_group_membership() -> StudyGroupMembership:
+    sgm = StudyGroupMembership()
+    sgm.student_id = 1
+    sgm.study_group_id = 1
+    sgm.join_date = datetime.now()
+    sgm.is_leader = True
+    
+    return sgm
+
 
 if __name__ == "__main__":
     try:
@@ -328,6 +350,8 @@ if __name__ == "__main__":
         challenge_score = create_daily_challenge_score()
         lesson_material = create_default_lesson()
         badge = create_default_badge()
+        study_group = create_study_group()
+        study_group_membership = create_study_group_membership()
 
         SESSION.commit()
     except Exception as e:
