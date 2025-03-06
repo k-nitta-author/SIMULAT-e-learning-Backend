@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker, scoped_session
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 
@@ -33,10 +33,15 @@ from werkzeug.security import generate_password_hash
 ENGINE = create_engine(environ.get("CONNECTION_STRING"))
 session = sessionmaker(bind=ENGINE)
 
-SESSION = session()
+SESSION = scoped_session(Session)
 
 APP = Flask(__name__)
 APP.secret_key = "secret_key"
+
+@APP.teardown_request
+def teardown_request(exception=None):
+    # Remove the scoped session
+    SESSION.remove()
 
 def add_to_session(func):
     def wrap(*args, **kwargs):
