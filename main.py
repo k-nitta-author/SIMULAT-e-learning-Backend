@@ -50,9 +50,11 @@ APP.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 db = SQLAlchemy(APP)
-engine = db.engine
-Session = sessionmaker(bind=engine)
-SESSION = scoped_session(Session)
+
+with APP.app_context():
+    engine = db.engine
+    Session = sessionmaker(bind=engine)
+    SESSION = scoped_session(Session)
 
 @APP.teardown_request
 def teardown_request(exception=None):
