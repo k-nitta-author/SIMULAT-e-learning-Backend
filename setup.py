@@ -31,9 +31,10 @@ from werkzeug.security import generate_password_hash
 
 
 ENGINE = create_engine(environ.get("CONNECTION_STRING"))
-session = sessionmaker(bind=ENGINE)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=ENGINE)
 
-SESSION = scoped_session(Session)
+SESSION = scoped_session(SessionLocal)
+
 
 APP = Flask(__name__)
 APP.secret_key = "secret_key"
