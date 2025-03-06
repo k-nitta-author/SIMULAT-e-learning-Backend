@@ -24,7 +24,8 @@ from resources.term import TermResource
 from resources.studygroup import StudyGroupResource
 
 from flask_cors import CORS
-
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from setup import APP
 
@@ -36,6 +37,23 @@ APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 # Set session timeout
 APP.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
+# Set up the database
+APP.config['SQLALCHEMY_DATABASE_URI'] = environ.get("DATABASE_URL")
+APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+APP.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_timeout': 30,  # Set the pool timeout to 30 seconds
+    'pool_recycle': 1800  # Recycle connections every 30 minutes
+}
+
+db = SQLAlchemy(APP)
+engine = db.engine
+Session = sessionmaker(bind=engine)
+SESSION = scoped_session(Session)
+
+@APP.teardown_request
+def teardown_request(exception=None):
+    # Remove the scoped session
+    SESSION.remove()
 
 user_resource = UserResource()
 course_resource = CourseResource()
