@@ -388,10 +388,16 @@ if __name__ == "__main__":
             StudyGroup.__table__.create(bind=engine)
             StudyGroupMembership.__table__.create(bind=engine)
 
+            # Commit the transaction
+            session.commit()
+
         # currently checks if there was a duplicate table error
         except ProgrammingError as e:
 
             session.rollback()
 
             print(e._message)
+        finally:
+            # Ensure the session is closed
+            session.close()
 
