@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from tables import DailyChallenge as table, DailyChallengeScore
-from setup import APP, SESSION
+from main import APP, SESSION
 from datetime import datetime
 from decorators import token_required
 from sqlalchemy.exc import IntegrityError, PendingRollbackError

@@ -11,7 +11,7 @@ from tables import Course
 from tables import Gender
 from tables import Badge
 
-from setup import APP, SESSION
+from main import APP, SESSION
 from decorators import token_required
 
 from datetime import datetime, timedelta

@@ -4,7 +4,7 @@ from tables import StudyGroupMembership as table
 from tables import User, StudyGroup
 
 
-from setup import APP, SESSION
+from main import APP, SESSION
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
