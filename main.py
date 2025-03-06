@@ -38,7 +38,10 @@ APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 APP.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 # Set up the database
-database_url = environ.get("DATABASE_URL") 
+database_url = environ.get("CONNECTION_STRING")
+if not database_url:
+    raise RuntimeError("CONNECTION_STRING environment variable not set")
+
 APP.config['SQLALCHEMY_DATABASE_URI'] = database_url
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 APP.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
