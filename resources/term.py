@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from tables import Term as table
-from main import APP, SESSION
+from setup import APP, SESSION
 from sqlalchemy.exc import IntegrityError
 
 

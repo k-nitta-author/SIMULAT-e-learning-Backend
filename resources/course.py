@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from tables import Course as table
 from tables import User
-from main import APP, SESSION
+from setup import APP, SESSION
 
 from sqlalchemy.exc import IntegrityError
 
@@ -18,9 +18,13 @@ class CourseResource():
     def course_get_all():
         result = SESSION.query(table).order_by(table.id).all()
 
+        print(result)
+
+
         output = []
 
         for item in result:
+            print(item)
 
             item_data = {
 

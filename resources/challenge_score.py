@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from tables import DailyChallengeScore as table
-from main import APP, SESSION
+from setup import APP, SESSION
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError

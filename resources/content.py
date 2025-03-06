@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from tables import Content as table
-from main import APP, SESSION
+from setup import APP, SESSION
 from datetime import datetime
 
 
