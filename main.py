@@ -38,7 +38,8 @@ APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 APP.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 # Set up the database
-APP.config['SQLALCHEMY_DATABASE_URI'] = environ.get("DATABASE_URL")
+database_url = environ.get("DATABASE_URL") 
+APP.config['SQLALCHEMY_DATABASE_URI'] = database_url
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 APP.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_timeout': 30,  # Set the pool timeout to 30 seconds
