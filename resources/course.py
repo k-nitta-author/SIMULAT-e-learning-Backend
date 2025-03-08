@@ -65,7 +65,7 @@ class CourseResource():
                 "instructor": f"{item.instructor.name_given} {item.instructor.name_last}",
                 "term": item.term_id,
                 "content_list": [{"id": c.id, "title": c.title, "url": c.url} for c in item.content_list],
-                "enrollments": [{"id": ce.id, "course_id": ce.course_id, "user_id": ce.user_id, "enroll_date": ce.enroll_date} for ce in item.enrollments],
+                "enrollments": [{"course_id": ce.course_id, "user_id": ce.user_id, "enroll_date": ce.enroll_date} for ce in item.enrollments],
                 "study_groups": [{"id": sg.id, "name": sg.name, "course_id": sg.course_id, "max_members": sg.max_members} for sg in item.study_groups]
             }
 
