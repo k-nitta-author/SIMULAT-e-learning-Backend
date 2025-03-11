@@ -155,7 +155,7 @@ class AssignmentResource():
         new_assignment = table(
             assignment_title=data["assignment_title"],
             content_id=data["content_id"],
-            created_at=datetime.strptime(data["created_at"], "%a, %d %b %Y %H:%M:%S %Z"),
+            created_at= datetime.now(),
             deadline=datetime.strptime(data["deadline"], "%a, %d %b %Y %H:%M:%S %Z"),
             description=data["description"],
             grading_criteria=data["grading_criteria"],
@@ -163,7 +163,7 @@ class AssignmentResource():
             instructions=data["instructions"],
             max_score=data["max_score"],
             submission_format=data["submission_format"],
-            updated_at=datetime.strptime(data["updated_at"], "%a, %d %b %Y %H:%M:%S %Z")
+            updated_at=datetime.now()
         )
         try:
             SESSION.add(new_assignment)
