@@ -127,20 +127,22 @@ class AssignmentResource():
     
     @APP.route('/assignment/<id>', methods=['PUT'])
     def update_assignment(id):
-        
         data = request.get_json()
-        
         a = SESSION.query(table).filter(table.id == id).first()
-        a.content_id = data["content_id"]
-        a.assignment_title = data["assignment_title"]
-        a.description = data["description"]
-        a.deadline = data["deadline"]
-        a.created_at = datetime.now()  # corrected usage
-        a.submission_format = data["submission_format"]
+        if not a:
+            return jsonify({"message": "No assignment by ID"}), 404
+
+        a.assignment_title = data.get("assignment_title", a.assignment_title)
+        a.content_id = data.get("content_id", a.content_id)
+        a.description = data.get("description", a.description)
+        a.deadline = datetime.strptime(data["deadline"], "%a, %d %b %Y %H:%M:%S %Z") if "deadline" in data else a.deadline
+        a.grading_criteria = data.get("grading_criteria", a.grading_criteria)
+        a.instructions = data.get("instructions", a.instructions)
+        a.max_score = data.get("max_score", a.max_score)
+        a.submission_format = data.get("submission_format", a.submission_format)
         a.updated_at = datetime.now()
 
         try:
-            SESSION.add(q)
             SESSION.commit()
         except Exception as e:
             SESSION.rollback()
