@@ -63,8 +63,8 @@ class AssignmentResource():
                 "term_id": item.term_id,
                 "term": {
                     "id": item.term.id,
-                    "name": item.term.name,
-                    # Add other term fields as needed
+                    "school_year_start": item.term.school_year_start,
+                    "school_year_end": item.term.school_year_end,
                 },
                 "scores": [
                     {
