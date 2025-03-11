@@ -68,7 +68,6 @@ class AssignmentResource():
                 },
                 "scores": [
                     {
-                        "id": score.id,
                         "score": score.score,
                         "submission_date": score.submission_date,
                         "student_id": score.student_id,
