@@ -61,8 +61,20 @@ class AssignmentResource():
                 "submission_format": item.submission_format,
                 "updated_at": item.updated_at,
                 "term_id": item.term_id,
-                "term": item.term.__dict__,
-                "scores": [score.__dict__ for score in item.scores]
+                "term": {
+                    "id": item.term.id,
+                    "name": item.term.name,
+                    # Add other term fields as needed
+                },
+                "scores": [
+                    {
+                        "id": score.id,
+                        "score": score.score,
+                        "submission_date": score.submission_date,
+                        "student_id": score.student_id,
+                        "student_name": f"{score.student.name_given} {score.student.name_last}"
+                    } for score in item.scores
+                ]
 
             }
 
@@ -90,10 +102,10 @@ class AssignmentResource():
             item_data = {
 
                 "score": score.score,
-                "submission date": score.submission_date,
-                "student id": score.student_id,
-                "student name": f"{s.name_given} {s.name_last}",
-                "assignment name": item.assignment_title,
+                "submission_date": score.submission_date,
+                "student_id": score.student_id,
+                "student_name": f"{s.name_given} {s.name_last}",
+                "assignment_name": item.assignment_title,
                 "completed_on_time": (item.deadline >= score.submission_date)
                 }
             
