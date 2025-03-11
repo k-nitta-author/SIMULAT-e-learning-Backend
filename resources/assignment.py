@@ -141,6 +141,7 @@ class AssignmentResource():
         a.max_score = data.get("max_score", a.max_score)
         a.submission_format = data.get("submission_format", a.submission_format)
         a.updated_at = datetime.now()
+        a.term_id = data.get("term_id", a.term_id)
 
         try:
             SESSION.commit()
@@ -155,11 +156,10 @@ class AssignmentResource():
         new_assignment = table(
             assignment_title=data["assignment_title"],
             content_id=data["content_id"],
-            created_at= datetime.now(),
+            created_at=datetime.now(),
             deadline=datetime.strptime(data["deadline"], "%a, %d %b %Y %H:%M:%S %Z"),
             description=data["description"],
             grading_criteria=data["grading_criteria"],
-            id=data["id"],
             instructions=data["instructions"],
             max_score=data["max_score"],
             submission_format=data["submission_format"],
