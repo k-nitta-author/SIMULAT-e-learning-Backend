@@ -146,3 +146,27 @@ class AssignmentResource():
             SESSION.rollback()
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
         return jsonify({"message": "assignment updated"})
+
+    @APP.route('/assignment', methods=['POST'])
+    def create_assignment():
+        data = request.get_json()
+        new_assignment = table(
+            assignment_title=data["assignment_title"],
+            content_id=data["content_id"],
+            created_at=datetime.strptime(data["created_at"], "%a, %d %b %Y %H:%M:%S %Z"),
+            deadline=datetime.strptime(data["deadline"], "%a, %d %b %Y %H:%M:%S %Z"),
+            description=data["description"],
+            grading_criteria=data["grading_criteria"],
+            id=data["id"],
+            instructions=data["instructions"],
+            max_score=data["max_score"],
+            submission_format=data["submission_format"],
+            updated_at=datetime.strptime(data["updated_at"], "%a, %d %b %Y %H:%M:%S %Z")
+        )
+        try:
+            SESSION.add(new_assignment)
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        return jsonify({"message": "assignment created", "assignment": data}), 201
