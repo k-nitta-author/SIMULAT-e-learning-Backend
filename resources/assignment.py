@@ -163,7 +163,8 @@ class AssignmentResource():
             instructions=data["instructions"],
             max_score=data["max_score"],
             submission_format=data["submission_format"],
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
+            term_id=data["term_id"]
         )
         try:
             SESSION.add(new_assignment)
