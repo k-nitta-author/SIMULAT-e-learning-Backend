@@ -21,18 +21,22 @@ class StudyGroupResource():
 
         for item in result:
             course = item.courses
+            memberships = []
+            for membership in item.memberships:
+                memberships.append({
+                    "student_id": membership.student_id,
+                    "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                    "join_date": membership.join_date.isoformat() if membership.join_date else None,
+                    "is_leader": membership.is_leader
+                })
+                
             item_data = {
                 "id": item.id,
                 "course_id": item.course_id,
                 "course_name": course.course_name,
                 "max_members": item.max_members,
                 "name": item.name,
-                "memberships": [{
-                    "student_id": membership.student_id,
-                    "student_name": f"{membership.member.name_given} {membership.member.name_last}",
-                    "join_date": membership.join_date,
-                    "is_leader": membership.is_leader
-                } for membership in item.memberships]
+                "memberships": memberships
             }
             output.append(item_data)
 
@@ -45,18 +49,22 @@ class StudyGroupResource():
         if not item: return jsonify({"Message":"No studygroup by ID"}), 404
 
         course = item.courses
+        memberships = []
+        for membership in item.memberships:
+            memberships.append({
+                "student_id": membership.student_id,
+                "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                "join_date": membership.join_date.isoformat() if membership.join_date else None,
+                "is_leader": membership.is_leader
+            })
+
         item_data = {
             "id": item.id,
             "course_id": item.course_id,
             "course_name": course.course_name,
             "max_members": item.max_members,
             "name": item.name,
-            "memberships": [{
-                "student_id": membership.student_id,
-                "student_name": f"{membership.member.name_given} {membership.member.name_last}",
-                "join_date": membership.join_date,
-                "is_leader": membership.is_leader
-            } for membership in item.memberships]
+            "memberships": memberships
         }
 
         return jsonify(item_data)
