@@ -16,42 +16,48 @@ class StudyGroupResource():
 
     @APP.route('/studygroup', methods=['GET'])
     def get_all_studygroup():
-
-
         result = SESSION.query(table).order_by(table.id).all()
-
         output = []
 
         for item in result:
-
+            course = item.courses
             item_data = {
-
                 "id": item.id,
                 "course_id": item.course_id,
+                "course_name": course.course_name,
                 "max_members": item.max_members,
                 "name": item.name,
-                "memberships": [{"student_id": membership.student_id, "join_date": membership.join_date, "is_leader": membership.is_leader} for membership in item.memberships]
+                "memberships": [{
+                    "student_id": membership.student_id,
+                    "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                    "join_date": membership.join_date,
+                    "is_leader": membership.is_leader
+                } for membership in item.memberships]
             }
-
             output.append(item_data)
 
         return jsonify(output)
     
     @APP.route('/studygroup/<id>', methods=['GET'])
     def get_by_id_studygroup(id):
-
         item = SESSION.query(table).filter(table.id == id).first()
 
         if not item: return jsonify({"Message":"No studygroup by ID"}), 404
 
+        course = item.courses
         item_data = {
-                "id": item.id,
-                "course_id": item.course_id,
-                "max_members": item.max_members,
-                "name": item.name,
-                "memberships": [{"student_id": membership.student_id, "join_date": membership.join_date, "is_leader": membership.is_leader} for membership in item.memberships]
+            "id": item.id,
+            "course_id": item.course_id,
+            "course_name": course.course_name,
+            "max_members": item.max_members,
+            "name": item.name,
+            "memberships": [{
+                "student_id": membership.student_id,
+                "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                "join_date": membership.join_date,
+                "is_leader": membership.is_leader
+            } for membership in item.memberships]
         }
-
 
         return jsonify(item_data)
     
