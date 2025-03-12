@@ -3,7 +3,6 @@ from flask import jsonify, request
 from tables import StudyGroup as table
 from tables import User
 
-
 from setup import APP, SESSION
 from datetime import datetime
 
@@ -16,58 +15,67 @@ class StudyGroupResource():
 
     @APP.route('/studygroup', methods=['GET'])
     def get_all_studygroup():
-        result = SESSION.query(table).order_by(table.id).all()
-        output = []
+        try:
+            result = SESSION.query(table).order_by(table.id).all()
+            output = []
 
-        for item in result:
-            course = item.courses
-            memberships = []
-            for membership in item.memberships:
-                memberships.append({
-                    "student_id": membership.student_id,
-                    "student_name": f"{membership.member.name_given} {membership.member.name_last}",
-                    "join_date": membership.join_date.isoformat() if membership.join_date else None,
-                    "is_leader": membership.is_leader
-                })
-                
-            item_data = {
-                "id": item.id,
-                "course_id": item.course_id,
-                "course_name": course.course_name,
-                "max_members": item.max_members,
-                "name": item.name,
-                "memberships": memberships
-            }
-            output.append(item_data)
+            for item in result:
+                course = item.courses
+                memberships = []
+                for membership in item.memberships:
+                    join_date = membership.join_date.isoformat() if membership.join_date else None
+                    memberships.append({
+                        "student_id": str(membership.student_id),  # Convert to string to ensure serialization
+                        "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                        "join_date": join_date,
+                        "is_leader": bool(membership.is_leader)  # Ensure boolean type
+                    })
+                    
+                item_data = {
+                    "id": str(item.id),  # Convert to string to ensure serialization
+                    "course_id": str(item.course_id),
+                    "course_name": str(course.course_name),
+                    "max_members": int(item.max_members),  # Ensure integer type
+                    "name": str(item.name),
+                    "memberships": memberships
+                }
+                output.append(item_data)
 
-        return jsonify(output)
+            return jsonify(output)
+        except Exception as e:
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
     
     @APP.route('/studygroup/<id>', methods=['GET'])
     def get_by_id_studygroup(id):
-        item = SESSION.query(table).filter(table.id == id).first()
+        try:
+            item = SESSION.query(table).filter(table.id == id).first()
 
-        if not item: return jsonify({"Message":"No studygroup by ID"}), 404
+            if not item: 
+                return jsonify({"Message":"No studygroup by ID"}), 404
 
-        course = item.courses
-        memberships = []
-        for membership in item.memberships:
-            memberships.append({
-                "student_id": membership.student_id,
-                "student_name": f"{membership.member.name_given} {membership.member.name_last}",
-                "join_date": membership.join_date.isoformat() if membership.join_date else None,
-                "is_leader": membership.is_leader
-            })
+            course = item.courses
+            memberships = []
+            for membership in item.memberships:
+                join_date = membership.join_date.isoformat() if membership.join_date else None
+                memberships.append({
+                    "student_id": str(membership.student_id),
+                    "student_name": f"{membership.member.name_given} {membership.member.name_last}",
+                    "join_date": join_date,
+                    "is_leader": bool(membership.is_leader)
+                })
 
-        item_data = {
-            "id": item.id,
-            "course_id": item.course_id,
-            "course_name": course.course_name,
-            "max_members": item.max_members,
-            "name": item.name,
-            "memberships": memberships
-        }
+            item_data = {
+                "id": str(item.id),
+                "course_id": str(item.course_id),
+                "course_name": str(course.course_name),
+                "max_members": int(item.max_members),
+                "name": str(item.name),
+                "memberships": memberships
+            }
 
-        return jsonify(item_data)
+            return jsonify(item_data)
+        except Exception as e:
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
     
     @APP.route('/studygroup', methods=['POST'])
     def create_studygroup():
