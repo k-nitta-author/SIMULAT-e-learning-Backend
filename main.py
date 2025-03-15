@@ -25,23 +25,24 @@ from resources.studygroup import StudyGroupResource
 # enable cors
 cors = CORS(APP, resources={r"/*": {"origins": "*"}})
 
+# register all routes
 user_resource = UserResource()
 course_resource = CourseResource()
 course_enrollment_resource = CourseEnrollmentResource()
 content_resource = ContentResource()
-challenege_resource = DailyChallengeResource()
-challenege_score_resource = DailyChallengeScoreResource()
+daily_challenge_resource = DailyChallengeResource()
+daily_challenge_score_resource = DailyChallengeScoreResource()
 
 quiz_resource = QuizResource()
 quiz_score_resource = QuizScoreResource()
 
-material_resource = LessonMaterialResource()
-assignemnt_res = AssignmentResource()
-assignment_score_res = AssignmentScoreResource()
+lesson_material_resource = LessonMaterialResource()
+assignment_resource = AssignmentResource()
+assignment_score_resource = AssignmentScoreResource()
 
-badge_res = BadgeResource()
-term_res = TermResource()
-study_group = StudyGroupResource()
+badge_resource = BadgeResource()
+term_resource = TermResource()
+study_group_resource = StudyGroupResource()
 
 if __name__ == '__main__':
     APP.run(debug=True, host='0.0.0.0', port=10000)
