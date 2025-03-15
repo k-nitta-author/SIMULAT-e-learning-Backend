@@ -8,7 +8,7 @@ import jwt
 from functools import wraps
 from os import environ
 from flask_cors import CORS
-from setup import APP, SESSION, db
+from setup import APP, SESSION
 
 from resources.user import UserResource
 from resources.course import CourseResource
