@@ -13,7 +13,7 @@ from decorators import token_required
 
 
 # resource class
-class AssignmentResource():
+class BulletinResource():
 
     @APP.route('/bulletin', methods=['GET'])
     def get_all_bulletin():
