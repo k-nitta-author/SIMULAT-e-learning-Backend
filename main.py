@@ -21,9 +21,41 @@ from resources.assignment_score import AssignmentScoreResource
 from resources.badge import BadgeResource
 from resources.term import TermResource
 from resources.studygroup import StudyGroupResource
+from sqlalchemy.orm import sessionmaker, scoped_session
+from flask_sqlalchemy import SQLAlchemy
 
 # enable cors
 cors = CORS(APP, resources={r"/*": {"origins": "*"}})
+
+
+APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
+
+# Set session timeout
+APP.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+
+# Set up the database
+database_url = environ.get("CONNECTION_STRING")
+if not database_url:
+    raise RuntimeError("CONNECTION_STRING environment variable not set")
+
+APP.config['SQLALCHEMY_DATABASE_URI'] = database_url
+APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+APP.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_timeout': 30,  # Set the pool timeout to 30 seconds
+    'pool_recycle': 1800  # Recycle connections every 30 minutes
+}
+
+db = SQLAlchemy(APP)
+
+with APP.app_context():
+    engine = db.engine
+    Session = sessionmaker(bind=engine)
+    SESSION = scoped_session(Session)
+
+@APP.teardown_request
+def teardown_request(exception=None):
+    # Remove the scoped session
+    SESSION.remove()
 
 # register all routes
 user_resource = UserResource()
