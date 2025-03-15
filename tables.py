@@ -345,7 +345,7 @@ class StudyGroup(BASE):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
     course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
-    max_members = Mapped[int]
+    max_members: Mapped[int] = mapped_column()  # Fixed type annotation
 
     courses: Mapped["Course"]=relationship(back_populates="study_groups")
 
