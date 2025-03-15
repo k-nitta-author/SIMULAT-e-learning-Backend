@@ -1,7 +1,7 @@
 from flask import jsonify, request
 
 from tables import StudyGroup as table
-from tables import User
+from tables import User, StudyGroupMembership
 
 from setup import APP, SESSION
 from datetime import datetime
@@ -79,25 +79,24 @@ class StudyGroupResource():
     
     @APP.route('/studygroup', methods=['POST'])
     def create_studygroup():
-
-        data = request.get_json()
-
-        q = table()
-        
-        q.course_id = data["course_id"]
-        q.max_members = data["max_members"]
-        q.name = data["name"]
-
         try:
+            data = request.get_json()
+            q = table()
+            
+            q.course_id = int(data["course_id"])
+            q.max_members = int(data["max_members"])
+            q.name = str(data["name"])
+
             SESSION.add(q)
             SESSION.commit()
+            return jsonify({"message": "studygroup_created"}), 201
 
-        except Exception as e:
-
+        except (ValueError, KeyError) as e:
             SESSION.rollback()
-            return jsonify({"message": "invalid input", "error": str(e)}), 400
-
-        return jsonify({"message": "studygroup_created"}), 201
+            return jsonify({"message": "Invalid input - type conversion error", "error": str(e)}), 400
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
     
     @APP.route('/studygroup/<id>', methods=['DELETE'])
     def delete_bulletin(id):
@@ -117,17 +116,67 @@ class StudyGroupResource():
     
     @APP.route('/studygroup/<id>', methods=['PUT'])
     def update_studygroup(id):
-
-        data = request.get_json()
-
-        q = SESSION.query(table).filter(table.id == id).first()
-
-
         try:
-            SESSION.add(q)
+            data = request.get_json()
+            q = SESSION.query(table).filter(table.id == id).first()
+            
+            if not q:
+                return jsonify({"message": "Study group not found"}), 404
+
+            if "course_id" in data:
+                q.course_id = int(data["course_id"])
+            if "max_members" in data:
+                q.max_members = int(data["max_members"])
+            if "name" in data:
+                q.name = str(data["name"])
+
             SESSION.commit()
+            return jsonify({"message": "studygroup updated"})
+
+        except (ValueError, KeyError) as e:
+            SESSION.rollback()
+            return jsonify({"message": "Invalid input - type conversion error", "error": str(e)}), 400
         except Exception as e:
             SESSION.rollback()
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"studygroup updated"})
+    @APP.route('/studygroup/<id>/join', methods=['POST'])
+    @token_required
+    def join_studygroup(current_user, id):
+        try:
+            # Check if user is a student
+            if not current_user.is_student:
+                return jsonify({"message": "Only students can join study groups"}), 403
+
+            # Get the study group
+            study_group = SESSION.query(table).filter(table.id == id).first()
+            if not study_group:
+                return jsonify({"message": "Study group not found"}), 404
+
+            # Check if group is full
+            if len(study_group.memberships) >= study_group.max_members:
+                return jsonify({"message": "Study group is full"}), 400
+
+            # Check if user is already a member
+            existing_membership = SESSION.query(StudyGroupMembership).filter_by(
+                student_id=current_user.id,
+                study_group_id=id
+            ).first()
+            if existing_membership:
+                return jsonify({"message": "Already a member of this study group"}), 400
+
+            # Create new membership
+            new_membership = StudyGroupMembership(
+                student_id=current_user.id,
+                study_group_id=id,
+                join_date=datetime.now().date(),
+                is_leader=False  # New members are not leaders by default
+            )
+
+            SESSION.add(new_membership)
+            SESSION.commit()
+            return jsonify({"message": "Successfully joined study group"}), 201
+
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
