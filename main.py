@@ -1,6 +1,9 @@
 import flask
+
 from flask import Flask, request, jsonify, make_response, session
 from datetime import datetime, timedelta
+
+# the below are for configuring the token
 import jwt
 from functools import wraps
 from os import environ
@@ -21,12 +24,15 @@ from resources.assignment_score import AssignmentScoreResource
 from resources.badge import BadgeResource
 from resources.term import TermResource
 from resources.studygroup import StudyGroupResource
-from sqlalchemy.orm import sessionmaker, scoped_session
+
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from setup import APP
 
 # enable cors
 cors = CORS(APP, resources={r"/*": {"origins": "*"}})
-
 
 APP.config['SECRET KEY'] = environ.get("SECRET_KEY")
 
@@ -57,25 +63,24 @@ def teardown_request(exception=None):
     # Remove the scoped session
     SESSION.remove()
 
-# register all routes
 user_resource = UserResource()
 course_resource = CourseResource()
 course_enrollment_resource = CourseEnrollmentResource()
 content_resource = ContentResource()
-daily_challenge_resource = DailyChallengeResource()
-daily_challenge_score_resource = DailyChallengeScoreResource()
+challenege_resource = DailyChallengeResource()
+challenege_score_resource = DailyChallengeScoreResource()
 
 quiz_resource = QuizResource()
 quiz_score_resource = QuizScoreResource()
 
-lesson_material_resource = LessonMaterialResource()
-assignment_resource = AssignmentResource()
-assignment_score_resource = AssignmentScoreResource()
+material_resource = LessonMaterialResource()
+assignemnt_res = AssignmentResource()
+assignment_score_res = AssignmentScoreResource()
 
-badge_resource = BadgeResource()
-term_resource = TermResource()
-study_group_resource = StudyGroupResource()
+badge_res = BadgeResource()
+term_res = TermResource()
+study_group = StudyGroupResource()
+
 
 if __name__ == '__main__':
     APP.run(debug=True, host='0.0.0.0', port=10000)
-
