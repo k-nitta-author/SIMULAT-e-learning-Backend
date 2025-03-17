@@ -24,6 +24,7 @@ from resources.assignment_score import AssignmentScoreResource
 from resources.badge import BadgeResource
 from resources.term import TermResource
 from resources.studygroup import StudyGroupResource
+from resources.bulletin_post import BulletinResource
 
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -80,6 +81,7 @@ assignment_score_res = AssignmentScoreResource()
 badge_res = BadgeResource()
 term_res = TermResource()
 study_group = StudyGroupResource()
+bulletin_res = BulletinResource()
 
 
 if __name__ == '__main__':
