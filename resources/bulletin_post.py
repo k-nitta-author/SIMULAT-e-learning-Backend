@@ -66,7 +66,7 @@ class BulletinResource():
         q = table()
 
         q.publish_date = datetime.now()
-        q.author_uid = data["author_uid"]
+        q.author_uid = int(data["author_uid"])
         q.description = data["description"]
         q.is_urgent = data["is_urgent"]
         q.name = data["name"]
