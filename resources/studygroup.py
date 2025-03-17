@@ -99,7 +99,7 @@ class StudyGroupResource():
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
     
     @APP.route('/studygroup/<id>', methods=['DELETE'])
-    def delete_bulletin(id):
+    def delete_studygroup(id):
 
         item = SESSION.query(table).filter(table.id == id).first()
 
