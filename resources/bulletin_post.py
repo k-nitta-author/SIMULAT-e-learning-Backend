@@ -60,29 +60,25 @@ class BulletinResource():
     
     @APP.route('/bulletin', methods=['POST'])
     def create_bulletin():
-
         data = request.get_json()
 
         q = table()
 
-        q.publish_date = datetime.now()
-        q.author_uid = int(data["author_uid"])
-        q.description = data["description"]
-        q.is_urgent = data["is_urgent"]
-        q.name = data["name"]
-        
-        
-
         try:
+            q.publish_date = datetime.now()
+            q.author_uid = int(data["author_uid"])
+            q.description = data["description"]
+            q.is_urgent = data["is_urgent"]
+            q.name = data["name"]
+            
             SESSION.add(q)
             SESSION.commit()
 
-        except IntegrityError:
-
+        except (IntegrityError, ValueError) as e:
             SESSION.rollback()
-            return jsonify({"message": "invalid input - integrity error"})
+            return jsonify({"message": f"invalid input - {str(e)}"}), 400
 
-        return jsonify({"message": "user_created"})
+        return jsonify({"message": "bulletin_created"}), 201
     
     @APP.route('/bulletin/<id>', methods=['DELETE'])
     def delete_bulletin(id):
