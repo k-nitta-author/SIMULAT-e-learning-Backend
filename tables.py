@@ -308,10 +308,10 @@ class BulletinPost(BASE):
     __tablename__ = "bulletin_post"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-
-    name : Mapped[int]
+    name: Mapped[str] = mapped_column(String(30))  # Changed from Mapped[int]
     description: Mapped[str] = mapped_column(String(500))
     publish_date: Mapped[date]
+    author_uid: Mapped[int]
     is_urgent: Mapped[bool]
 
     author_uid:  Mapped[int] = mapped_column(ForeignKey("user.id"))  
