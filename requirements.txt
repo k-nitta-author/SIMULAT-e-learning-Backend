@@ -1,5 +1,5 @@
 sqlalchemy
-flask
+flask[async]
 marshmallow
 Flask-RESTful
 psycopg2

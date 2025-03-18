@@ -24,7 +24,7 @@ from os import environ
 
 
 # Environment variables
-WEAVY_URL = environ.get("WEAVY_URL", "https://api.weavy.io")
+WEAVY_URL = environ.get("WEAVY_URL")
 API_KEY = environ.get("WEAVY_API_KEY")
 
 
