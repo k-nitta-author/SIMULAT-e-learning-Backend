@@ -455,7 +455,7 @@ class UserResource():
     async def get_token():
         """Get or refresh Weavy access token"""
         refresh = request.args.get('refresh') == "true"
-        username = session.get('user')  # Use Flask's session instead of request.session
+        username = session.get('user')
 
         if not username:
             return jsonify(message="No user in session"), 401
@@ -464,8 +464,8 @@ class UserResource():
             return jsonify(access_token=_token_store[username])
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with aiohttp.ClientSession() as http_session:  # Renamed to http_session
+                async with http_session.post(
                     f"{WEAVY_URL}/api/users/{username}/tokens",
                     headers={'Authorization': f'Bearer {API_KEY}'}
                 ) as response:
