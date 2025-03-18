@@ -18,6 +18,18 @@ from datetime import datetime, timedelta
 
 from werkzeug.security import generate_password_hash
 import jwt
+import aiohttp
+
+from os import environ
+
+
+# Environment variables
+WEAVY_URL = environ.get("WEAVY_URL", "https://api.weavy.io")
+API_KEY = environ.get("WEAVY_API_KEY")
+
+
+# Global token store
+_token_store: dict[str, str] = {}
 
 
 # resource class
@@ -436,3 +448,30 @@ class UserResource():
             return jsonify({"token": token, "user_id": u.id}), 200
         
         return jsonify({"message": "invalid user credentials"})
+
+
+    @APP.route('/token', methods=['GET'])
+    async def get_token():
+        """Get or refresh Weavy access token"""
+        refresh = request.args.get('refresh') == "true"
+        username = request.session.get('user')
+
+        if not username:
+            return jsonify(message="No user in session"), 401
+
+        if not refresh and username in _token_store:
+            return jsonify(access_token=_token_store[username])
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{WEAVY_URL}/api/users/{username}/tokens",
+                    headers={'Authorization': f'Bearer {API_KEY}'}
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        _token_store[username] = data['access_token']
+                        return jsonify(access_token=data['access_token'])
+                    return jsonify(message="Could not get token from Weavy"), response.status
+        except Exception as e:
+            return jsonify(message=str(e)), 500
