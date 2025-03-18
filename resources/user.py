@@ -67,10 +67,10 @@ class UserResource():
             output.append(item_data)
 
         return jsonify(output)
-    
+
 
     # get individual users
-    # intended for user profile pages, etc. 
+    # intended for user profile pages, etc.
     @APP.route('/user/<id>', methods=['GET'])
     def get_by_id(id):
         try:
@@ -96,9 +96,9 @@ class UserResource():
             "gender": item.gender
         }
         return jsonify(item_data)
-    
+
     # gets all instructors
-    # intended for lists, tables, etc. 
+    # intended for lists, tables, etc.
     # CONSIDER: including informaiton on which class they teach if any
     @APP.route('/user/instructors', methods=['GET'])
     def get_instructors():
@@ -129,7 +129,7 @@ class UserResource():
             output.append(item_data)
 
         return jsonify(output)
-    
+
     # get detailed list of students
     # CONSIDER: adding details on which courses they are enrolled in
     @APP.route('/user/students', methods=['GET'])
@@ -162,8 +162,8 @@ class UserResource():
 
 
         return jsonify(output)
-    
-    # simply gets the student and returns a list of the badges they have earned. 
+
+    # simply gets the student and returns a list of the badges they have earned.
     # it is technically possible for a teacher or admin to earn points and badges
     # not pertienent to change tho
     @APP.route('/user/<id>/badges', methods=['GET'])
@@ -172,9 +172,9 @@ class UserResource():
         student: table = SESSION.query(table).filter(table.id == id).first()
 
         badges : list = Badge.get_student_badges(SESSION, student)
-        
+
         return jsonify({f"{student.name_given} {student.name_last}": badges})
-    
+
     # gets all admin-level users, nothign more
     @APP.route('/user/admin', methods=['GET'])
     def get_admin():
@@ -206,7 +206,7 @@ class UserResource():
 
 
         return jsonify(output)
-    
+
     # allows one to create a new user
     @APP.route('/user', methods=['POST'])
     def create():
@@ -227,7 +227,7 @@ class UserResource():
         u.gender = data["gender"]
         u.progress_score = 0
         u.active = True
-        
+
         # simple error handling code; meant to rollback session
         # in case of invalid calls to db
         # do not modify unless one has anything better.
@@ -239,15 +239,15 @@ class UserResource():
 
             SESSION.rollback()
             return jsonify({"message": "invalid input - integrity error"}), 400
-        
+
         except PendingRollbackError:
-            
+
             SESSION.rollback()
 
             return jsonify({"message": "invalid input - PendingRollbackError"}), 400
 
         return jsonify({"message": "user_created"}), 201
-    
+
 
     # allows one to delete a user
     # requires token with admin-level priveliges
@@ -270,7 +270,7 @@ class UserResource():
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message": "user_deleted"})
-    
+
     # allows one to update user data
     # intended for use in user profiles in edit mode
     # TODO: consider further changes
@@ -289,7 +289,7 @@ class UserResource():
         u.username = data["username"]
         u.name_given= data["name_given"]
         u.name_last = data["name_last"]
-        
+
         try:
             SESSION.add(u)
             SESSION.commit()
@@ -298,7 +298,7 @@ class UserResource():
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"user updated"}), 200
-    
+
     # grants or takes away user priveliges to users
     # requires admin level access before proceeding
     @APP.route('/user/<id>/grant', methods=['PUT'])
@@ -316,7 +316,7 @@ class UserResource():
         u.is_instructor = data["is_instructor"]
         u.is_student = data["is_student"]
         u.is_super_admin = data["is_super_admin"]
-        
+
         try:
             SESSION.add(u)
             SESSION.commit()
@@ -325,7 +325,7 @@ class UserResource():
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
         return jsonify({"message":"user privileges updated"}), 200
-    
+
     # gets the user's quiz scores if they have any
     @APP.route('/user/<id>/q/scores', methods=['GET'])
     def get_user_quiz_scores(id):
@@ -352,7 +352,7 @@ class UserResource():
 
 
         return jsonify({"message":output})
-    
+
     # gets the user's scores for the challenges
     @APP.route('/user/<id>/c/scores', methods=['GET'])
     def get_user_challenge_scores(id):
@@ -366,7 +366,7 @@ class UserResource():
         for item in scores:
 
             score: DailyChallengeScore = item
-            
+
             score_data = {
                 "submission date":score.submission_date,
                 "Score": score.score
@@ -375,7 +375,7 @@ class UserResource():
             output.append(score_data)
 
         return jsonify({"message":output})
-    
+
 
     # gets the study groups that a user is enrolled into
     @APP.route('/user/<id>/studygroups/', methods=['GET'])
@@ -391,7 +391,7 @@ class UserResource():
 
             study_group: StudyGroup = item.study_group
             course: Course = study_group.course
-            
+
             study_group_data = {
                 "Study Group Name":study_group.name,
                 "study group id":study_group.id,
@@ -415,7 +415,7 @@ class UserResource():
         for item in scores:
 
             score: AssignmentScore = item
-            
+
             score_data = {
                 "Score": score.score,
                 "Submission Date": score.submission_date
@@ -423,13 +423,13 @@ class UserResource():
 
             output.append(score_data)
 
-        return jsonify({"message":output})    
+        return jsonify({"message":output})
 
     @APP.route('/user/login', methods=['GET'])
     def login():
         auth = request.authorization
-        if auth is None: 
-            return jsonify({"message": "no user credentials"}), 401 
+        if auth is None:
+            return jsonify({"message": "no user credentials"}), 401
 
         params = auth.parameters
         username = params.get('username')
@@ -440,14 +440,14 @@ class UserResource():
         if can_login:
             # Store username in session
             session['user'] = u.username
-            
+
             token = jwt.encode({
                 'user': u.username,
                 'exp': datetime.now() + timedelta(seconds=10),
                 'roles': table.get_roles_list(u)}, APP.secret_key)
 
-            return jsonify({"token": token, "user_id": u.id}), 
-            
+            return jsonify({"token": token, "user_id": u.id}),
+
         return jsonify({"message": "Invalid credentials"}), 401
 
 
@@ -476,3 +476,96 @@ class UserResource():
                     return jsonify(message="Could not get token from Weavy"), response.status
         except Exception as e:
             return jsonify(message=str(e)), 500
+
+    # get top 10 students by progress score
+    @APP.route('/user/top-students', methods=['GET'])
+    def get_top_students():
+        result = SESSION.query(table).filter(table.is_student == True)\
+            .order_by(table.progress_score.desc()).limit(10).all()
+
+        output = []
+        for item in result:
+            item_data = {
+                "id": item.id,
+                "name_given": item.name_given,
+                "name_last": item.name_last,
+                "progress_score": item.progress_score
+            }
+            output.append(item_data)
+
+        return jsonify(output)
+
+    @APP.route('/user/<id>/courses', methods=['GET'])
+    def get_user_courses(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+        
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
+        output = []
+        enrollments = u.enrollments
+
+        for enrollment in enrollments:
+            course = enrollment.courses
+            course_data = {
+                "id": course.id,
+                "course_code": course.course_code,
+                "course_name": course.course_name,
+                "description": course.description,
+                "instructor_id": course.instructor_id,
+                "enroll_date": enrollment.enroll_date
+            }
+            output.append(course_data)
+
+        return jsonify(output)
+
+    @APP.route('/user/<id>/all-scores', methods=['GET'])
+    def get_user_all_scores(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
+        output = {
+            "quiz_scores": [],
+            "assignment_scores": [],
+            "challenge_scores": []
+        }
+
+        # Get quiz scores
+        for item in u.quiz_scores:
+            quiz = item.quiz
+            score_data = {
+                "title": quiz.quiz_title,
+                "score": item.score,
+                "submission_date": item.submission_date.isoformat(),
+                "quiz_id": quiz.id
+            }
+            output["quiz_scores"].append(score_data)
+
+        # Get assignment scores
+        for item in u.assignment_scores:
+            assignment = item.assignment
+            score_data = {
+                "title": assignment.assignment_title,
+                "score": item.score,
+                "submission_date": item.submission_date.isoformat(),
+                "assignment_id": assignment.id
+            }
+            output["assignment_scores"].append(score_data)
+
+        # Get challenge scores
+        for item in u.challenge_scores:
+            challenge = item.challenge
+            score_data = {
+                "title": challenge.title,
+                "score": item.score,
+                "submission_date": item.submission_date.isoformat(),
+                "challenge_id": challenge.id
+            }
+            output["challenge_scores"].append(score_data)
+
+        return jsonify(output)
+
+
+
