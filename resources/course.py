@@ -1,5 +1,5 @@
 from flask import jsonify, request
-from tables import Course as table
+from tables import Course as table, CourseEnrollment
 from tables import User
 from setup import APP, SESSION
 
@@ -36,7 +36,7 @@ class CourseResource():
                 "is_published": item.is_published,
                 "created_at": item.created_at,
                 "updated_at": item.updated_at,
-                "term": item.term_id,
+                "term_id": item.term_id,
                 "instructor": f"{item.instructor.name_given} {item.instructor.name_last}"
             }
 
@@ -63,8 +63,8 @@ class CourseResource():
                 "created_at": item.created_at,
                 "updated_at": item.updated_at,
                 "instructor": f"{item.instructor.name_given} {item.instructor.name_last}",
-                "term": item.term_id,
-                "content_list": [{"id": c.id, "title": c.title, "url": c.url} for c in item.content_list],
+                "term_id": item.term_id,
+                "content_list": [{"id": c.id, "type": c.type, "title": c.title, "description": c.description, "url": c.url} for c in item.content_list],
                 "enrollments": [{"course_id": ce.course_id, "user_id": ce.user_id, "enroll_date": ce.enroll_date} for ce in item.enrollments],
                 "study_groups": [{"id": sg.id, "name": sg.name, "course_id": sg.course_id, "max_members": sg.max_members} for sg in item.study_groups]
             }
@@ -140,3 +140,76 @@ class CourseResource():
             return jsonify({"message":"something went wrong", "error": str(e)}), 500
 
         return jsonify({"message":"course updated"})
+    
+# this route gets courses a user is enrolled in
+@APP.route('/user/<user_id>/enrolled-courses', methods=['GET'])
+def get_enrolled_courses(user_id):
+    user = SESSION.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    enrolled_courses = [
+        {
+            "id": enrollment.courses.id,
+            "course_code": enrollment.courses.course_code,
+            "course_name": enrollment.courses.course_name,
+            "description": enrollment.courses.description,
+            "instructor_id": enrollment.courses.instructor_id,
+            "term_id": enrollment.courses.term_id,
+            "is_published": enrollment.courses.is_published
+        }
+        for enrollment in user.enrollments
+    ]
+
+    return jsonify(enrolled_courses)
+
+# this route gets courses a user is not enrolled in
+@APP.route('/user/<user_id>/not-enrolled-courses', methods=['GET'])
+def get_not_enrolled_courses(user_id):
+    user = SESSION.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    enrolled_course_ids = {enrollment.course_id for enrollment in user.enrollments}
+    not_enrolled_courses = SESSION.query(table).filter(~table.id.in_(enrolled_course_ids)).all()
+
+    output = [
+        {
+            "id": course.id,
+            "course_code": course.course_code,
+            "course_name": course.course_name,
+            "description": course.description,
+            "instructor_id": course.instructor_id,
+            "term_id": course.term_id,
+            "is_published": course.is_published
+        }
+        for course in not_enrolled_courses
+    ]
+
+    return jsonify(output)
+
+# this route enrolls a user in a course
+@APP.route('/user/<user_id>/enroll/<course_id>', methods=['POST'])
+def enroll_in_course(user_id, course_id):
+    user = SESSION.query(User).filter(User.id == user_id).first()
+    course = SESSION.query(table).filter(table.id == course_id).first()
+
+    if not user or not course:
+        return jsonify({"message": "User or Course not found"}), 404
+
+    enrollment = CourseEnrollment(user_id=user_id, course_id=course_id, enroll_date=datetime.now())
+
+    try:
+        SESSION.add(enrollment)
+        SESSION.commit()
+    except IntegrityError:
+        SESSION.rollback()
+        return jsonify({"message": "User already enrolled in this course"}), 400
+    except Exception as e:
+        SESSION.rollback()
+        return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    return jsonify({"message": "user enrolled in course"}), 201
+
