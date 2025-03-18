@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 from tables import User as table
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 
@@ -427,34 +427,35 @@ class UserResource():
 
     @APP.route('/user/login', methods=['GET'])
     def login():
-
         auth = request.authorization
-
-        if auth is None: return jsonify({"message": "no user credentials"}), 401 
+        if auth is None: 
+            return jsonify({"message": "no user credentials"}), 401 
 
         params = auth.parameters
-
-        username  = params.get('username')
-        password  = params.get('password')
+        username = params.get('username')
+        password = params.get('password')
 
         u, can_login = table.check_login_credentials(SESSION, username, password)
 
         if can_login:
+            # Store username in session
+            session['user'] = u.username
+            
             token = jwt.encode({
                 'user': u.username,
                 'exp': datetime.now() + timedelta(seconds=10),
                 'roles': table.get_roles_list(u)}, APP.secret_key)
 
-            return jsonify({"token": token, "user_id": u.id}), 200
-        
-        return jsonify({"message": "invalid user credentials"})
+            return jsonify({"token": token, "user_id": u.id}), 
+            
+        return jsonify({"message": "Invalid credentials"}), 401
 
 
     @APP.route('/token', methods=['GET'])
     async def get_token():
         """Get or refresh Weavy access token"""
         refresh = request.args.get('refresh') == "true"
-        username = request.session.get('user')
+        username = session.get('user')  # Use Flask's session instead of request.session
 
         if not username:
             return jsonify(message="No user in session"), 401
