@@ -213,3 +213,26 @@ def enroll_in_course(user_id, course_id):
 
     return jsonify({"message": "user enrolled in course"}), 201
 
+
+
+@APP.route('/course/<id>/publish', methods=['POST'])
+def publish_course(id):
+    course = SESSION.query(table).filter(table.id == id).first()
+
+    if not course:
+        return jsonify({"message": "Course not found"}), 404
+
+    if course.is_published:
+        return jsonify({"message": "Course is already published"}), 400
+
+    course.is_published = True
+    course.updated_at = datetime.now()
+
+    try:
+        SESSION.commit()
+    except Exception as e:
+        SESSION.rollback()
+        return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    return jsonify({"message": "Course published successfully"}), 200
+
