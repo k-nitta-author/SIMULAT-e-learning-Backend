@@ -35,6 +35,13 @@ _token_store: dict[str, str] = {}
 # resource class
 class UserResource():
 
+    # Helper function to calculate progress score
+    def calculate_progress_score(user):
+        quiz_total = sum(score.score for score in user.quiz_scores)
+        assignment_total = sum(score.score for score in user.assignment_scores)
+        challenge_total = sum(score.score for score in user.challenge_scores)
+        return quiz_total + assignment_total + challenge_total
+
     # get all users
     # intended for lists and tables with detailed data
     # CONSIDER: putting behind admin access?
@@ -60,7 +67,7 @@ class UserResource():
                 "is_super_admin": item.is_super_admin,
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
-                "progress_score": item.progress_score,
+                "progress_score": calculate_progress_score(item),
                 "gender": item.gender
             }
 
@@ -92,7 +99,7 @@ class UserResource():
             "is_super_admin": item.is_super_admin,
             "is_student": item.is_student,
             "is_instructor": item.is_instructor,
-            "progress_score": item.progress_score,
+            "progress_score": calculate_progress_score(item),
             "gender": item.gender
         }
         return jsonify(item_data)
@@ -480,16 +487,18 @@ class UserResource():
     # get top 10 students by progress score
     @APP.route('/user/top-students', methods=['GET'])
     def get_top_students():
-        result = SESSION.query(table).filter(table.is_student == True)\
-            .order_by(table.progress_score.desc()).limit(10).all()
+        students = SESSION.query(table).filter(table.is_student == True).all()
+        # Calculate scores and sort in Python since we need the calculated value
+        students_with_scores = [(student, calculate_progress_score(student)) for student in students]
+        sorted_students = sorted(students_with_scores, key=lambda x: x[1], reverse=True)[:10]
 
         output = []
-        for item in result:
+        for student, score in sorted_students:
             item_data = {
-                "id": item.id,
-                "name_given": item.name_given,
-                "name_last": item.name_last,
-                "progress_score": item.progress_score
+                "id": student.id,
+                "name_given": student.name_given,
+                "name_last": student.name_last,
+                "progress_score": score
             }
             output.append(item_data)
 
@@ -514,6 +523,31 @@ class UserResource():
                 "description": course.description,
                 "instructor_id": course.instructor_id,
                 "enroll_date": enrollment.enroll_date
+            }
+            output.append(course_data)
+
+        return jsonify(output)
+
+    @APP.route('/user/<id>/courses-not-enrolled', methods=['GET'])
+    def get_not_enrolled_courses(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+        
+        enrolled_course_ids = {enrollment.course_id for enrollment in u.enrollments}
+        not_enrolled_courses = SESSION.query(table).filter(~table.id.in_(enrolled_course_ids)).all()
+
+        output = []
+        for course in not_enrolled_courses:
+            course_data = {
+                "id": course.id,
+                "course_code": course.course_code,
+                "course_name": course.course_name,
+                "description": course.description,
+                "instructor_id": course.instructor_id,
+                "term_id": course.term_id,
+                "is_published": course.is_published
             }
             output.append(course_data)
 
