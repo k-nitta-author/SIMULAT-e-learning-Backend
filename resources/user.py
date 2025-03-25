@@ -10,6 +10,9 @@ from tables import StudyGroup
 from tables import Course
 from tables import Gender
 from tables import Badge
+from tables import DailyChallenge
+from tables import Assignment
+from tables import StudyGroupMembership
 
 from setup import APP, SESSION
 from decorators import token_required
@@ -32,15 +35,17 @@ API_KEY = environ.get("WEAVY_API_KEY")
 _token_store: dict[str, str] = {}
 
 
+def calculate_progress_score(user):
+    quiz_total = sum(score.score for score in user.quiz_scores)
+    assignment_total = sum(score.score for score in user.assignment_scores)
+    challenge_total = sum(score.score for score in user.challenge_scores)
+    return quiz_total + assignment_total + challenge_total
+
 # resource class
 class UserResource():
 
     # Helper function to calculate progress score
-    def calculate_progress_score(user):
-        quiz_total = sum(score.score for score in user.quiz_scores)
-        assignment_total = sum(score.score for score in user.assignment_scores)
-        challenge_total = sum(score.score for score in user.challenge_scores)
-        return quiz_total + assignment_total + challenge_total
+
 
     # get all users
     # intended for lists and tables with detailed data
@@ -598,6 +603,78 @@ class UserResource():
                 "challenge_id": challenge.id
             }
             output["challenge_scores"].append(score_data)
+
+        return jsonify(output)
+
+    @APP.route('/user/<id>/assessment-status', methods=['GET'])
+    def get_user_assessment_status(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
+        # Get all quizzes and user's quiz scores
+        all_quizzes = SESSION.query(Quiz).all()
+        user_quiz_scores = {score.quiz_id: score for score in u.quiz_scores}
+
+        # Get all assignments and user's assignment scores
+        all_assignments = SESSION.query(Assignment).all()
+        user_assignment_scores = {score.assignment_id: score for score in u.assignment_scores}
+
+        # Get all challenges and user's challenge scores
+        all_challenges = SESSION.query(DailyChallenge).all()
+        user_challenge_scores = {score.challenge_id: score for score in u.challenge_scores}
+
+        output = {
+            "quizzes": {
+                "completed": [],
+                "pending": []
+            },
+            "assignments": {
+                "completed": [],
+                "pending": []
+            },
+            "challenges": {
+                "completed": [],
+                "pending": []
+            }
+        }
+
+        # Process quizzes
+        for quiz in all_quizzes:
+            quiz_data = {
+                "id": quiz.id,
+                "title": quiz.quiz_title,
+                "score": user_quiz_scores[quiz.id].score if quiz.id in user_quiz_scores else None
+            }
+            if quiz.id in user_quiz_scores:
+                output["quizzes"]["completed"].append(quiz_data)
+            else:
+                output["quizzes"]["pending"].append(quiz_data)
+
+        # Process assignments
+        for assignment in all_assignments:
+            assignment_data = {
+                "id": assignment.id,
+                "title": assignment.assignment_title,
+                "score": user_assignment_scores[assignment.id].score if assignment.id in user_assignment_scores else None
+            }
+            if assignment.id in user_assignment_scores:
+                output["assignments"]["completed"].append(assignment_data)
+            else:
+                output["assignments"]["pending"].append(assignment_data)
+
+        # Process challenges
+        for challenge in all_challenges:
+            challenge_data = {
+                "id": challenge.id,
+                "title": challenge.title,
+                "score": user_challenge_scores[challenge.id].score if challenge.id in user_challenge_scores else None
+            }
+            if challenge.id in user_challenge_scores:
+                output["challenges"]["completed"].append(challenge_data)
+            else:
+                output["challenges"]["pending"].append(challenge_data)
 
         return jsonify(output)
 
