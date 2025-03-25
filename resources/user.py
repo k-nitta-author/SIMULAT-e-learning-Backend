@@ -534,7 +534,7 @@ class UserResource():
         return jsonify(output)
 
     @APP.route('/user/<id>/courses-not-enrolled', methods=['GET'])
-    def get_not_enrolled_courses(id):
+    def get_user_not_enrolled_courses(id):
         u = SESSION.query(table).filter(table.id == id).first()
 
         if not u:
