@@ -143,8 +143,14 @@ class StudyGroupResource():
         
 
     @APP.route('/studygroup/<id>/join', methods=['POST'])
-    def join_studygroup(current_user, id):
+    def join_studygroup(id):
         try:
+            # Get the current user
+            current_user_id = request.get_json()["current_user_id"]
+            current_user = SESSION.query(User).filter(User.id == current_user_id).first()
+            if not current_user:
+                return jsonify({"message": "User not found"}), 404
+
             # Check if user is a student
             if not current_user.is_student:
                 return jsonify({"message": "Only students can join study groups"}), 403
