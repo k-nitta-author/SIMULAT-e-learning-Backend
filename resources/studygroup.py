@@ -139,6 +139,8 @@ class StudyGroupResource():
         except Exception as e:
             SESSION.rollback()
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        
+        
 
     @APP.route('/studygroup/<id>/join', methods=['POST'])
     @token_required
@@ -179,4 +181,23 @@ class StudyGroupResource():
 
         except Exception as e:
             SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    @APP.route('/studygroup/<id>/members', methods=['GET'])
+    def get_studygroup_members(id):
+        try:
+            study_group = SESSION.query(table).filter(table.id == id).first()
+            if not study_group:
+                return jsonify({"message": "Study group not found"}), 404
+
+            members = []
+            for membership in study_group.memberships:
+                members.append({
+                    "student_id": str(membership.student_id),
+                    "name": f"{membership.member.name_given} {membership.member.name_last}",
+                    "is_leader": bool(membership.is_leader)
+                })
+
+            return jsonify(members)
+        except Exception as e:
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
