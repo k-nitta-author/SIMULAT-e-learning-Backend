@@ -462,6 +462,14 @@ class UserResource():
 
         return jsonify({"message": "Invalid credentials"}), 401
 
+    @APP.route('/user/logout', methods=['POST'])
+    def logout():
+        username = session.get('user')
+        if username:
+            session.pop('user', None)
+            if username in _token_store:
+                del _token_store[username]
+        return jsonify({"message": "Logged out successfully"}), 200
 
     @APP.route('/token', methods=['GET'])
     async def get_token():
