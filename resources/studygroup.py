@@ -143,7 +143,6 @@ class StudyGroupResource():
         
 
     @APP.route('/studygroup/<id>/join', methods=['POST'])
-    @token_required
     def join_studygroup(current_user, id):
         try:
             # Check if user is a student
