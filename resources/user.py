@@ -228,10 +228,10 @@ class UserResource():
         u = table()
 
         u.email = data["email"]
-        u.is_admin = False
-        u.is_instructor = False
-        u.is_student = False
-        u.is_super_admin = False
+        u.is_admin = data["is_admin"]
+        u.is_instructor = data["is_instructor"]
+        u.is_student = data["is_student"]
+        u.is_super_admin = data["is_super_admin"]
         u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
         u.name_given= data["name_given"]
@@ -613,16 +613,22 @@ class UserResource():
         if not u:
             return jsonify({"message": "User not found"}), 404
 
-        # Get all quizzes and user's quiz scores
-        all_quizzes = SESSION.query(Quiz).all()
+        # Get all quizzes with course info and user's quiz scores
+        all_quizzes = (SESSION.query(Quiz, Course)
+                      .join(Course, Course.id == Quiz.content_id)
+                      .all())
         user_quiz_scores = {score.quiz_id: score for score in u.quiz_scores}
 
-        # Get all assignments and user's assignment scores
-        all_assignments = SESSION.query(Assignment).all()
+        # Get all assignments with course info and user's assignment scores
+        all_assignments = (SESSION.query(Assignment, Course)
+                         .join(Course, Course.id == Assignment.content_id)
+                         .all())
         user_assignment_scores = {score.assignment_id: score for score in u.assignment_scores}
 
-        # Get all challenges and user's challenge scores
-        all_challenges = SESSION.query(DailyChallenge).all()
+        # Get all challenges with course info and user's challenge scores
+        all_challenges = (SESSION.query(DailyChallenge, Course)
+                        .join(Course, Course.id == DailyChallenge.content_id)
+                        .all())
         user_challenge_scores = {score.challenge_id: score for score in u.challenge_scores}
 
         output = {
@@ -641,10 +647,12 @@ class UserResource():
         }
 
         # Process quizzes
-        for quiz in all_quizzes:
+        for quiz, course in all_quizzes:
             quiz_data = {
                 "id": quiz.id,
                 "title": quiz.quiz_title,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
                 "score": user_quiz_scores[quiz.id].score if quiz.id in user_quiz_scores else None
             }
             if quiz.id in user_quiz_scores:
@@ -653,10 +661,12 @@ class UserResource():
                 output["quizzes"]["pending"].append(quiz_data)
 
         # Process assignments
-        for assignment in all_assignments:
+        for assignment, course in all_assignments:
             assignment_data = {
                 "id": assignment.id,
                 "title": assignment.assignment_title,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
                 "score": user_assignment_scores[assignment.id].score if assignment.id in user_assignment_scores else None
             }
             if assignment.id in user_assignment_scores:
@@ -665,10 +675,12 @@ class UserResource():
                 output["assignments"]["pending"].append(assignment_data)
 
         # Process challenges
-        for challenge in all_challenges:
+        for challenge, course in all_challenges:
             challenge_data = {
                 "id": challenge.id,
                 "title": challenge.title,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
                 "score": user_challenge_scores[challenge.id].score if challenge.id in user_challenge_scores else None
             }
             if challenge.id in user_challenge_scores:
