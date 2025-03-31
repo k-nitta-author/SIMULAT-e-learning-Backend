@@ -251,3 +251,60 @@ class TermResource():
         ]
 
         return jsonify(output)
+    
+    @APP.route('/term/<id>/all', methods=['GET'])
+    def get_term_all_items(id):
+        q = SESSION.query(table).filter(table.id == id).first()
+
+        if q is None: return jsonify({"message": "no term found"}), 404
+
+        output = {
+            "term": {
+                "id": q.id,
+                "school_year_start": q.school_year_start,
+                "school_year_end": q.school_year_end
+            },
+            "quizzes": [
+                {    
+                    "id": quiz.id,
+                    "content_id": quiz.content_id,
+                    "quiz_title": quiz.quiz_title,
+                    "description": quiz.description,
+                    "time_limit": quiz.time_limit,
+                    "is_published": quiz.is_published
+                } for quiz in q.quizzes
+            ],
+            "assignments": [
+                {
+                    "id": assignment.id,
+                    "assignment_title": assignment.assignment_title,
+                    "content_id": assignment.content_id,
+                    "description": assignment.description,
+                    "deadline": assignment.deadline,
+                    "max_score": assignment.max_score,
+                    "submission_format": assignment.submission_format
+                } for assignment in q.assignments
+            ],
+            "courses": [
+                {
+                    "id": course.id,
+                    "course_code": course.course_code,
+                    "course_name": course.course_name,
+                    "description": course.description,
+                    "instructor_id": course.instructor_id,
+                    "is_published": course.is_published
+                } for course in q.courses
+            ],
+            "content": [
+                {
+                    "id": content.id,
+                    "type": content.type,
+                    "title": content.title,
+                    "description": content.description,
+                    "url": content.url,
+                    "course_id": content.course_id
+                } for content in q.content
+            ]
+        }
+
+        return jsonify(output)
