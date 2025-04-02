@@ -240,65 +240,80 @@ def publish_course(id):
 
     return jsonify({"message": "Course published successfully"}), 200
 
-# this route gets all pending scores for a user in a course
-@APP.route('/course/<course_id>/user/<user_id>/pending-scores', methods=['GET'])
-def get_pending_scores(course_id, user_id):
+# this route gets all scores for a course
+@APP.route('/course/<course_id>/scores', methods=['GET'])
+def get_pending_scores(course_id):
     course = SESSION.query(table).filter(table.id == course_id).first()
     if not course:
         return jsonify({"message": "Course not found"}), 404
 
     content_ids = [content.id for content in course.content_list]
     output = {
-        "pending_assignments": [],
-        "pending_quizzes": [],
-        "pending_challenges": []
+        "assignments": [],
+        "quizzes": [],
+        "challenges": []
     }
 
-    # Get assignments with -1 scores
+    # Get all assignments and their scores
     assignments = SESSION.query(Assignment).filter(
         Assignment.content_id.in_(content_ids)
     ).all()
     for assignment in assignments:
-        score = SESSION.query(AssignmentScore).filter(
-            AssignmentScore.assignment_id == assignment.id,
-            AssignmentScore.student_id == user_id
-        ).first()
-        if score is None or score.score == -1:
-            output["pending_assignments"].append({
-                "id": assignment.id,
-                "title": assignment.assignment_title,
-                "deadline": assignment.deadline.isoformat() if assignment.deadline else None
-            })
+        scores = SESSION.query(AssignmentScore).filter(
+            AssignmentScore.assignment_id == assignment.id
+        ).all()
+        
+        output["assignments"].append({
+            "id": assignment.id,
+            "title": assignment.assignment_title,
+            "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+            "scores": [{
+                "student_id": score.student_id,
+                "score": score.score,
+                "submission_date": score.submission_date.isoformat(),
+                "pending": score.score == -1
+            } for score in scores]
+        })
 
-    # Get quizzes with -1 scores
+    # Get all quizzes and their scores
     quizzes = SESSION.query(Quiz).filter(
         Quiz.content_id.in_(content_ids)
     ).all()
     for quiz in quizzes:
-        score = SESSION.query(QuizScore).filter(
-            QuizScore.quiz_id == quiz.id,
-            QuizScore.student_id == user_id
-        ).first()
-        if score is None or score.score == -1:
-            output["pending_quizzes"].append({
-                "id": quiz.id,
-                "title": quiz.quiz_title,
-            })
+        scores = SESSION.query(QuizScore).filter(
+            QuizScore.quiz_id == quiz.id
+        ).all()
+        
+        output["quizzes"].append({
+            "id": quiz.id,
+            "title": quiz.quiz_title,
+            "scores": [{
+                "student_id": score.student_id,
+                "score": score.score,
+                "submission_date": score.submission_date.isoformat(),
+                "pending": score.score == -1
+            } for score in scores]
+        })
 
-    # Get challenges with -1 scores
+    # Get all challenges and their scores
     challenges = SESSION.query(DailyChallenge).filter(
         DailyChallenge.content_id.in_(content_ids)
     ).all()
     for challenge in challenges:
-        score = SESSION.query(DailyChallengeScore).filter(
-            DailyChallengeScore.challenge_id == challenge.id,
-            DailyChallengeScore.user_id == user_id
-        ).first()
-        if score is None or score.score == -1:
-            output["pending_challenges"].append({
-                "id": challenge.id,
-                "title": challenge.title,
-            })
+        scores = SESSION.query(DailyChallengeScore).filter(
+            DailyChallengeScore.challenge_id == challenge.id
+        ).all()
+        
+        output["challenges"].append({
+            "id": challenge.id,
+            "title": challenge.title,
+            "scores": [{
+                "student_id": score.user_id,
+                "score": score.score,
+                "submission_date": score.submission_date.isoformat(),
+                "pending": score.score == -1
+            } for score in scores]
+        })
 
     return jsonify(output)
 
