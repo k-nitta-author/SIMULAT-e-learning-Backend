@@ -109,6 +109,7 @@ class UserResource():
         }
         return jsonify(item_data)
 
+
     # gets all instructors
     # intended for lists, tables, etc.
     # CONSIDER: including informaiton on which class they teach if any
@@ -414,6 +415,57 @@ class UserResource():
             output.append(study_group_data)
 
         return jsonify({"message":output})
+
+    @APP.route('/user/<id>/study-groups', methods=['GET'])
+    def get_user_study_groups_detailed(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
+        output = []
+        for membership in u.study_groups_membership:
+            study_group = membership.study_group
+            course = study_group.courses
+            group_data = {
+                "group_id": study_group.id,
+                "group_name": study_group.name,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
+                "is_leader": membership.is_leader,
+                "join_date": membership.join_date.isoformat(),
+                "max_members": study_group.max_members,
+                "course_id": course.id
+            }
+            output.append(group_data)
+
+        return jsonify(output)
+
+    @APP.route('/user/<id>/teaching-courses', methods=['GET'])
+    def get_instructor_courses(id):
+        u = SESSION.query(table).filter(table.id == id).first()
+
+        if not u:
+            return jsonify({"message": "User not found"}), 404
+
+        if not u.is_instructor:
+            return jsonify({"message": "User is not an instructor"}), 403
+
+        output = []
+        for course in u.courses_created:
+            course_data = {
+                "id": course.id,
+                "course_code": course.course_code,
+                "course_name": course.course_name,
+                "description": course.description,
+                "is_published": course.is_published,
+                "created_at": course.created_at.isoformat(),
+                "updated_at": course.updated_at.isoformat(),
+                "term_id": course.term_id
+            }
+            output.append(course_data)
+
+        return jsonify(output)
 
     @APP.route('/user/<id>/a/scores', methods=['GET'])
     def get_user_assignment_scores(id):
