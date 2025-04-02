@@ -247,16 +247,14 @@ def get_pending_scores(course_id, user_id):
     if not course:
         return jsonify({"message": "Course not found"}), 404
 
-    # Get all content IDs for this course
     content_ids = [content.id for content in course.content_list]
-
     output = {
         "pending_assignments": [],
         "pending_quizzes": [],
         "pending_challenges": []
     }
 
-    # Get assignments without scores
+    # Get assignments with -1 scores
     assignments = SESSION.query(Assignment).filter(
         Assignment.content_id.in_(content_ids)
     ).all()
@@ -265,14 +263,14 @@ def get_pending_scores(course_id, user_id):
             AssignmentScore.assignment_id == assignment.id,
             AssignmentScore.student_id == user_id
         ).first()
-        if score is None:
+        if score is None or score.score == -1:
             output["pending_assignments"].append({
                 "id": assignment.id,
                 "title": assignment.assignment_title,
                 "deadline": assignment.deadline.isoformat() if assignment.deadline else None
             })
 
-    # Get quizzes without scores
+    # Get quizzes with -1 scores
     quizzes = SESSION.query(Quiz).filter(
         Quiz.content_id.in_(content_ids)
     ).all()
@@ -281,13 +279,13 @@ def get_pending_scores(course_id, user_id):
             QuizScore.quiz_id == quiz.id,
             QuizScore.student_id == user_id
         ).first()
-        if score is None:
+        if score is None or score.score == -1:
             output["pending_quizzes"].append({
                 "id": quiz.id,
                 "title": quiz.quiz_title,
             })
 
-    # Get challenges without scores
+    # Get challenges with -1 scores
     challenges = SESSION.query(DailyChallenge).filter(
         DailyChallenge.content_id.in_(content_ids)
     ).all()
@@ -296,7 +294,7 @@ def get_pending_scores(course_id, user_id):
             DailyChallengeScore.challenge_id == challenge.id,
             DailyChallengeScore.user_id == user_id
         ).first()
-        if score is None:
+        if score is None or score.score == -1:
             output["pending_challenges"].append({
                 "id": challenge.id,
                 "title": challenge.title,
@@ -304,18 +302,17 @@ def get_pending_scores(course_id, user_id):
 
     return jsonify(output)
 
-# this route grades a quiz submission
-@APP.route('/course/<course_id>/quiz/<quiz_id>/grade/<user_id>', methods=['POST'])
-def grade_quiz(course_id, quiz_id, user_id):
+# Completion routes for creating initial score objects
+@APP.route('/course/<course_id>/quiz/<quiz_id>/complete/<user_id>', methods=['POST'])
+def complete_quiz(course_id, quiz_id, user_id):
     quiz = SESSION.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not quiz:
         return jsonify({"message": "Quiz not found"}), 404
 
-    data = request.get_json()
     score = QuizScore(
         quiz_id=quiz_id,
         student_id=user_id,
-        score=data['score'],
+        score=-1,
         submission_date=datetime.now()
     )
 
@@ -329,20 +326,18 @@ def grade_quiz(course_id, quiz_id, user_id):
         SESSION.rollback()
         return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-    return jsonify({"message": "Quiz graded successfully"}), 201
+    return jsonify({"message": "Quiz completed successfully"}), 201
 
-# this route grades an assignment submission
-@APP.route('/course/<course_id>/assignment/<assignment_id>/grade/<user_id>', methods=['POST'])
-def grade_assignment(course_id, assignment_id, user_id):
+@APP.route('/course/<course_id>/assignment/<assignment_id>/complete/<user_id>', methods=['POST'])
+def complete_assignment(course_id, assignment_id, user_id):
     assignment = SESSION.query(Assignment).filter(Assignment.id == assignment_id).first()
     if not assignment:
         return jsonify({"message": "Assignment not found"}), 404
 
-    data = request.get_json()
     score = AssignmentScore(
         assignment_id=assignment_id,
         student_id=user_id,
-        score=data['score'],
+        score=-1,
         submission_date=datetime.now()
     )
 
@@ -356,20 +351,18 @@ def grade_assignment(course_id, assignment_id, user_id):
         SESSION.rollback()
         return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-    return jsonify({"message": "Assignment graded successfully"}), 201
+    return jsonify({"message": "Assignment completed successfully"}), 201
 
-# this route grades a challenge submission
-@APP.route('/course/<course_id>/challenge/<challenge_id>/grade/<user_id>', methods=['POST'])
-def grade_challenge(course_id, challenge_id, user_id):
+@APP.route('/course/<course_id>/challenge/<challenge_id>/complete/<user_id>', methods=['POST'])
+def complete_challenge(course_id, challenge_id, user_id):
     challenge = SESSION.query(DailyChallenge).filter(DailyChallenge.id == challenge_id).first()
     if not challenge:
         return jsonify({"message": "Challenge not found"}), 404
 
-    data = request.get_json()
     score = DailyChallengeScore(
         challenge_id=challenge_id,
         user_id=user_id,
-        score=data['score'],
+        score=-1,
         submission_date=datetime.now()
     )
 
@@ -383,5 +376,69 @@ def grade_challenge(course_id, challenge_id, user_id):
         SESSION.rollback()
         return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-    return jsonify({"message": "Challenge graded successfully"}), 201
+    return jsonify({"message": "Challenge completed successfully"}), 201
+
+# Simplified grading methods
+@APP.route('/course/<course_id>/quiz/<quiz_id>/grade/<user_id>', methods=['PUT'])
+def grade_quiz(course_id, quiz_id, user_id):
+    score = SESSION.query(QuizScore).filter(
+        QuizScore.quiz_id == quiz_id,
+        QuizScore.student_id == user_id
+    ).first()
+    
+    if not score:
+        return jsonify({"message": "No submission found to grade"}), 404
+
+    data = request.get_json()
+    score.score = data.get('score', -1)
+
+    try:
+        SESSION.commit()
+    except Exception as e:
+        SESSION.rollback()
+        return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    return jsonify({"message": "Quiz graded successfully"}), 200
+
+@APP.route('/course/<course_id>/assignment/<assignment_id>/grade/<user_id>', methods=['PUT'])
+def grade_assignment(course_id, assignment_id, user_id):
+    score = SESSION.query(AssignmentScore).filter(
+        AssignmentScore.assignment_id == assignment_id,
+        AssignmentScore.student_id == user_id
+    ).first()
+    
+    if not score:
+        return jsonify({"message": "No submission found to grade"}), 404
+
+    data = request.get_json()
+    score.score = data.get('score', -1)
+
+    try:
+        SESSION.commit()
+    except Exception as e:
+        SESSION.rollback()
+        return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    return jsonify({"message": "Assignment graded successfully"}), 200
+
+@APP.route('/course/<course_id>/challenge/<challenge_id>/grade/<user_id>', methods=['PUT'])
+def grade_challenge(course_id, challenge_id, user_id):
+    score = SESSION.query(DailyChallengeScore).filter(
+        DailyChallengeScore.challenge_id == challenge_id,
+        DailyChallengeScore.user_id == user_id
+    ).first()
+    
+    if not score:
+        return jsonify({"message": "No submission found to grade"}), 404
+
+    data = request.get_json()
+    score.score = data.get('score', -1)
+
+    try:
+        SESSION.commit()
+    except Exception as e:
+        SESSION.rollback()
+        return jsonify({"message": "Error occurred", "error": str(e)}), 500
+
+    return jsonify({"message": "Challenge graded successfully"}), 200
 
