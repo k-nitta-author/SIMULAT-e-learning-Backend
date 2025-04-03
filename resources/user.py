@@ -93,6 +93,46 @@ class UserResource():
         if not item:
             return jsonify({"message": "No user by ID"}), 404
 
+        # Calculate course-specific progress scores
+        course_progress = []
+        for enrollment in item.enrollments:
+            course = enrollment.courses
+            
+            # Get all assessments for this course
+            course_quizzes = [qs for qs in item.quiz_scores if qs.quiz.content_id == course.id]
+            course_assignments = [asg for asg in item.assignment_scores if asg.assignment.content_id == course.id]
+            course_challenges = [cs for cs in item.challenge_scores if cs.challenge.content_id == course.id]
+            
+            # Calculate total scores earned
+            quiz_score = sum(qs.score for qs in course_quizzes)
+            assignment_score = sum(asg.score for asg in course_assignments)
+            challenge_score = sum(cs.score for cs in course_challenges)
+            
+            # Calculate maximum possible scores
+            max_quiz_score = sum(quiz.max_score if hasattr(quiz, 'max_score') else 100 for quiz in course_quizzes)
+            max_assignment_score = sum(assignment.max_score for assignment in course_assignments)
+            max_challenge_score = sum(100 for _ in course_challenges)  # Assuming challenges are out of 100
+            
+            # Calculate total percentage
+            total_earned = quiz_score + assignment_score + challenge_score
+            total_possible = max_quiz_score + max_assignment_score + max_challenge_score
+            
+            percentage = (total_earned / total_possible * 100) if total_possible > 0 else 0
+            
+            course_progress.append({
+                "course_id": course.id,
+                "course_name": course.course_name,
+                "course_code": course.course_code,
+                "completion_percentage": round(percentage, 2),
+                "scores": {
+                    "quizzes": quiz_score,
+                    "assignments": assignment_score,
+                    "challenges": challenge_score
+                },
+                "total_score": total_earned,
+                "max_possible": total_possible
+            })
+
         item_data = {
             "id": item.id,
             "name_given": item.name_given,
@@ -104,8 +144,9 @@ class UserResource():
             "is_super_admin": item.is_super_admin,
             "is_student": item.is_student,
             "is_instructor": item.is_instructor,
-            "progress_score": calculate_progress_score(item),
-            "gender": item.gender
+            "gender": item.gender,
+            "overall_progress": calculate_progress_score(item),
+            "course_progress": course_progress
         }
         return jsonify(item_data)
 
