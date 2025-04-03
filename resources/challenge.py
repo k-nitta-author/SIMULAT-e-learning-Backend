@@ -99,4 +99,20 @@ class DailyChallengeResource():
             SESSION.rollback()
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
         return jsonify({"message": "challenge updated"})
+    
+    @APP.route('/challenge/<id>/publish', methods=['PUT'])
+    def publish_challenge(id):
+        q = SESSION.query(table).filter(table.id == id).first()
+        if not q:
+            return jsonify({"Message": "No Challenge by ID"}), 404
+        
+        q.is_published = True
+        q.publication_date = datetime.now()
+        q.updated_at = datetime.now()
+        try:
+            SESSION.commit()
+        except Exception as e:
+            SESSION.rollback()
+            return jsonify({"message": "Error occurred", "error": str(e)}), 500
+        return jsonify({"message": "challenge published"})
 
