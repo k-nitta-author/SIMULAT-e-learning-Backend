@@ -153,18 +153,60 @@ def get_enrolled_courses(user_id):
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    enrolled_courses = [
-        {
-            "id": enrollment.courses.id,
-            "course_code": enrollment.courses.course_code,
-            "course_name": enrollment.courses.course_name,
-            "description": enrollment.courses.description,
-            "instructor_id": enrollment.courses.instructor_id,
-            "term_id": enrollment.courses.term_id,
-            "is_published": enrollment.courses.is_published
+    enrolled_courses = []
+    
+    for enrollment in user.enrollments:
+        course = enrollment.courses
+        content_ids = [content.id for content in course.content_list]
+        
+        # Get quiz scores
+        quiz_scores = SESSION.query(QuizScore).join(Quiz).filter(
+            QuizScore.student_id == user_id,
+            Quiz.content_id.in_(content_ids)
+        ).all()
+        
+        # Get assignment scores
+        assignment_scores = SESSION.query(AssignmentScore).join(Assignment).filter(
+            AssignmentScore.student_id == user_id,
+            Assignment.content_id.in_(content_ids)
+        ).all()
+        
+        # Get challenge scores
+        challenge_scores = SESSION.query(DailyChallengeScore).join(DailyChallenge).filter(
+            DailyChallengeScore.user_id == user_id,
+            DailyChallenge.content_id.in_(content_ids)
+        ).all()
+        
+        # Count total items and completed items
+        total_items = (
+            SESSION.query(Quiz).filter(Quiz.content_id.in_(content_ids)).count() +
+            SESSION.query(Assignment).filter(Assignment.content_id.in_(content_ids)).count() +
+            SESSION.query(DailyChallenge).filter(DailyChallenge.content_id.in_(content_ids)).count()
+        )
+        
+        completed_items = len([s for s in quiz_scores if s.score >= 0]) + \
+                         len([s for s in assignment_scores if s.score >= 0]) + \
+                         len([s for s in challenge_scores if s.score >= 0])
+        
+        completion_percentage = (completed_items / total_items * 100) if total_items > 0 else 0
+        
+        course_data = {
+            "id": course.id,
+            "course_code": course.course_code,
+            "course_name": course.course_name,
+            "description": course.description,
+            "instructor_id": course.instructor_id,
+            "term_id": course.term_id,
+            "is_published": course.is_published,
+            "completion_percentage": round(completion_percentage, 2),
+            "scores": {
+                "quizzes": [{"quiz_id": s.quiz_id, "score": s.score, "submission_date": s.submission_date.isoformat()} for s in quiz_scores],
+                "assignments": [{"assignment_id": s.assignment_id, "score": s.score, "submission_date": s.submission_date.isoformat()} for s in assignment_scores],
+                "challenges": [{"challenge_id": s.challenge_id, "score": s.score, "submission_date": s.submission_date.isoformat()} for s in challenge_scores]
+            }
         }
-        for enrollment in user.enrollments
-    ]
+        
+        enrolled_courses.append(course_data)
 
     return jsonify(enrolled_courses)
 
