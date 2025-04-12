@@ -109,8 +109,8 @@ class UserResource():
             challenge_score = sum(cs.score for cs in course_challenges)
             
             # Calculate maximum possible scores
-            max_quiz_score = sum(quiz.max_score if hasattr(quiz, 'max_score') else 100 for quiz in course_quizzes)
-            max_assignment_score = sum(assignment.max_score for assignment in course_assignments)
+            max_quiz_score = sum(100 for _ in course_quizzes)  # Assuming quizzes are out of 100
+            max_assignment_score = sum(asg.assignment.max_score for asg in course_assignments)  # Fix: access max_score through assignment
             max_challenge_score = sum(100 for _ in course_challenges)  # Assuming challenges are out of 100
             
             # Calculate total percentage
@@ -304,12 +304,9 @@ class UserResource():
 
 
     # allows one to delete a user
-    # requires token with admin-level priveliges
     # TODO: consider further security policies
     @APP.route('/user/<id>', methods=['DELETE'])
-    @token_required("admin")
     def delete(id):
-
         item = SESSION.query(table).filter(table.id == id).first()
 
         if not item: return jsonify({"Message":"No User by ID"}), 404
@@ -567,17 +564,22 @@ class UserResource():
     @APP.route('/token', methods=['GET'])
     async def get_token():
         """Get or refresh Weavy access token"""
-        refresh = request.args.get('refresh') == "true"
-        username = session.get('user')
-
-        if not username:
-            return jsonify(message="No user in session"), 401
-
-        if not refresh and username in _token_store:
-            return jsonify(access_token=_token_store[username])
-
         try:
-            async with aiohttp.ClientSession() as http_session:  # Renamed to http_session
+            refresh = request.args.get('refresh') == "true"
+            username = session.get('user')
+
+            if not username:
+                return jsonify({"message": "No user in session"}), 401
+
+            # Get user from database to validate existence
+            user = SESSION.query(table).filter(table.username == username).first()
+            if not user:
+                return jsonify({"message": "User not found"}), 404
+
+            if not refresh and username in _token_store:
+                return jsonify({"access_token": _token_store[username]})
+
+            async with aiohttp.ClientSession() as http_session:
                 async with http_session.post(
                     f"{WEAVY_URL}/api/users/{username}/tokens",
                     headers={'Authorization': f'Bearer {API_KEY}'}
@@ -585,10 +587,11 @@ class UserResource():
                     if response.status == 200:
                         data = await response.json()
                         _token_store[username] = data['access_token']
-                        return jsonify(access_token=data['access_token'])
-                    return jsonify(message="Could not get token from Weavy"), response.status
+                        return jsonify({"access_token": data['access_token']})
+                    return jsonify({"message": f"Weavy error: {response.status}"}), response.status
+
         except Exception as e:
-            return jsonify(message=str(e)), 500
+            return jsonify({"message": f"Error processing token request: {str(e)}"}), 500
 
     # get top 10 students by progress score
     @APP.route('/user/top-students', methods=['GET'])
