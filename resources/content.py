@@ -132,23 +132,24 @@ class ContentResource():
     
     @APP.route('/content/<id>', methods=['PUT'])
     def update_content(id):
-
         data = request.get_json()
 
         q = SESSION.query(table).filter(table.id == id).first()
 
+        if not q:
+            return jsonify({"message": "Content not found"}), 404
+
         q.course_id = data["course_id"]
-        q.content_title = data["title"]
-        q.content_description = data["description"]
-        q.content_url = data["url"]
-        q.created_at = data["created_at"]
+        q.title = data["title"]
+        q.description = data["description"]
+        q.url = data["url"]
+        q.type = data["type"]
         q.term_id = data["term_id"]
 
         try:
-            SESSION.add(q)
             SESSION.commit()
         except Exception as e:
             SESSION.rollback()
             return jsonify({"message": "Error occurred", "error": str(e)}), 500
 
-        return jsonify({"message":"content updated"})
+        return jsonify({"message": "content updated"})
