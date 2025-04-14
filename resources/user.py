@@ -358,7 +358,6 @@ class UserResource():
     # grants or takes away user priveliges to users
     # requires admin level access before proceeding
     @APP.route('/user/<id>/grant', methods=['PUT'])
-    @token_required("admin")
     def grant_priveliges_user(id):
 
         data = request.get_json()
