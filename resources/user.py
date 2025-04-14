@@ -73,7 +73,8 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": calculate_progress_score(item),
-                "gender": item.gender
+                "gender": item.gender,
+                "active": item.active
             }
 
             output.append(item_data)
@@ -146,7 +147,8 @@ class UserResource():
             "is_instructor": item.is_instructor,
             "gender": item.gender,
             "overall_progress": calculate_progress_score(item),
-            "course_progress": course_progress
+            "course_progress": course_progress,
+            "active": item.active
         }
         return jsonify(item_data)
 
@@ -177,7 +179,8 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender
+                "gender": item.gender,
+                "active": item.active
             }
 
             output.append(item_data)
@@ -209,7 +212,8 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender
+                "gender": item.gender,
+                "active": item.active
             }
 
             output.append(item_data)
@@ -253,7 +257,8 @@ class UserResource():
                 "is_student": item.is_student,
                 "is_instructor": item.is_instructor,
                 "progress_score": item.progress_score,
-                "gender": item.gender
+                "gender": item.gender,
+                "active": item.active
             }
 
             output.append(item_data)
@@ -616,7 +621,8 @@ class UserResource():
                 "id": student.id,
                 "name_given": student.name_given,
                 "name_last": student.name_last,
-                "progress_score": score
+                "progress_score": score,
+                "active": student.active
             }
             output.append(item_data)
 
