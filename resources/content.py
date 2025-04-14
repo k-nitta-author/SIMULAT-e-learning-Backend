@@ -27,6 +27,8 @@ class ContentResource():
                 "content_description": item.description,
                 "content_url": item.url,
                 "created_at": item.created_at,
+                "type": item.type,
+                "term_id": item.term_id
             }
 
 
