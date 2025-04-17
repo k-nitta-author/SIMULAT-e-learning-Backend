@@ -771,6 +771,7 @@ class UserResource():
                 "title": quiz.quiz_title,
                 "course_name": course.course_name,
                 "course_code": course.course_code,
+                "max_score": 100,  # Quizzes typically have max score of 100
                 "score": user_quiz_scores[quiz.id].score if quiz.id in user_quiz_scores else None
             }
             if quiz.id in user_quiz_scores:
@@ -785,6 +786,8 @@ class UserResource():
                 "title": assignment.assignment_title,
                 "course_name": course.course_name,
                 "course_code": course.course_code,
+                "max_score": assignment.max_score,  # Using max_score from Assignment table
+                "deadline": assignment.deadline.isoformat(),
                 "score": user_assignment_scores[assignment.id].score if assignment.id in user_assignment_scores else None
             }
             if assignment.id in user_assignment_scores:
@@ -799,6 +802,7 @@ class UserResource():
                 "title": challenge.title,
                 "course_name": course.course_name,
                 "course_code": course.course_code,
+                "max_score": 100,  # Daily challenges typically have max score of 100
                 "score": user_challenge_scores[challenge.id].score if challenge.id in user_challenge_scores else None
             }
             if challenge.id in user_challenge_scores:
