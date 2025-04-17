@@ -309,11 +309,13 @@ def get_pending_scores(course_id):
             "id": assignment.id,
             "title": assignment.assignment_title,
             "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+            "max_score": assignment.max_score,
             "scores": [{
                 "student_id": score.student_id,
                 "score": score.score,
                 "submission_date": score.submission_date.isoformat(),
-                "pending": score.score == -1
+                "pending": score.score == -1,
+                "is_valid": score.score <= assignment.max_score if score.score >= 0 else True
             } for score in scores]
         })
 
@@ -329,11 +331,13 @@ def get_pending_scores(course_id):
         output["quizzes"].append({
             "id": quiz.id,
             "title": quiz.quiz_title,
+            "max_score": 100,  # Default max score for quizzes
             "scores": [{
                 "student_id": score.student_id,
                 "score": score.score,
                 "submission_date": score.submission_date.isoformat(),
-                "pending": score.score == -1
+                "pending": score.score == -1,
+                "is_valid": score.score <= 100 if score.score >= 0 else True
             } for score in scores]
         })
 
@@ -349,11 +353,13 @@ def get_pending_scores(course_id):
         output["challenges"].append({
             "id": challenge.id,
             "title": challenge.title,
+            "max_score": 100,  # Default max score for challenges
             "scores": [{
                 "student_id": score.user_id,
                 "score": score.score,
                 "submission_date": score.submission_date.isoformat(),
-                "pending": score.score == -1
+                "pending": score.score == -1,
+                "is_valid": score.score <= 100 if score.score >= 0 else True
             } for score in scores]
         })
 
