@@ -549,7 +549,7 @@ class UserResource():
 
             token = jwt.encode({
                 'user': u.username,
-                'exp': datetime.now() + timedelta(seconds=10),
+                'exp': datetime.now() + timedelta(hours=24),
                 'roles': table.get_roles_list(u)}, APP.secret_key)
 
             return jsonify({
