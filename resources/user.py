@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 import jwt
 import aiohttp
+import requests  # Add this import at the top of the file
 
 from os import environ
 
@@ -575,68 +576,42 @@ class UserResource():
         return jsonify({"message": "Logged out successfully"}), 200
 
     @APP.route('/token', methods=['GET'])
-    async def get_token():
+    def get_token():
         """Get or refresh Weavy access token"""
         try:
             # Get bearer token from header
             auth_header = request.headers.get('Authorization')
             if not auth_header or not auth_header.startswith('Bearer '):
-                return jsonify({
-                    "message": "No bearer token provided",
-                    "status": "unauthorized"
-                }), 401
+                return jsonify({"message": "No bearer token provided"}), 401
 
             # Decode JWT token to get username
             token = auth_header.split(' ')[1]
             try:
                 decoded = jwt.decode(token, APP.secret_key, algorithms=['HS256'])
                 username = decoded['user']
-            except jwt.ExpiredSignatureError:
-                return jsonify({
-                    "message": "Token expired",
-                    "status": "unauthorized"
-                }), 401
-            except jwt.InvalidTokenError:
-                return jsonify({
-                    "message": "Invalid token", 
-                    "status": "unauthorized"
-                }), 401
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+                return jsonify({"message": "Invalid or expired token"}), 401
 
             # Check if refresh requested
-            refresh = request.args.get('refresh') == 'true'
+            refresh = request.args.get('refresh', 'false').lower() == 'true'
 
             # Return cached token if exists and refresh not requested
             if not refresh and username in _token_store:
-                return jsonify({
-                    "access_token": _token_store[username],
-                    "status": "success"
-                })
+                return jsonify({"access_token": _token_store[username]})
 
             # Request new token from Weavy
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{WEAVY_URL}/api/users/{username}/tokens",
-                    headers={'Authorization': f'Bearer {API_KEY}'}
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        _token_store[username] = data['access_token']
-                        return jsonify({
-                            "access_token": data['access_token'],
-                            "status": "success",
-                            "username": username  # Added username for debugging
-                        })
-                    return jsonify({
-                        "message": "Could not get access token from server",
-                        "status": "error",
-                        "username": username  # Added username for debugging
-                    }), response.status
+            headers = {'Authorization': f'Bearer {API_KEY}'}
+            response = requests.post(f"{WEAVY_URL}/api/users/{username}/tokens", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                _token_store[username] = data['access_token']
+                return jsonify({"access_token": data['access_token']})
+
+            return jsonify({"message": "Could not get access token from server"}), response.status_code
 
         except Exception as e:
-            return jsonify({
-                "message": f"Token request failed: {str(e)}",
-                "status": "error"
-            }), 500
+            return jsonify({"message": f"Token request failed: {str(e)}"}), 500
 
     # get top 10 students by progress score
     @APP.route('/user/top-students', methods=['GET'])
