@@ -575,7 +575,7 @@ class UserResource():
         return jsonify({"message": "Logged out successfully"}), 200
 
     @APP.route('/token', methods=['GET'])
-    def get_token():
+    async def get_token():
         """Get or refresh Weavy access token"""
         try:
             # Get bearer token from header
@@ -600,14 +600,14 @@ class UserResource():
 
             # Request new token from Weavy
             headers = {'Authorization': f'Bearer {API_KEY}'}
-            response = requests.post(f"{WEAVY_URL}/api/users/{username}/tokens", headers=headers)
-            
-            if response.status_code == 200:
-                data = response.json()
-                _token_store[username] = data['access_token']
-                return jsonify({"access_token": data['access_token']})
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"{WEAVY_URL}/api/users/{username}/tokens", headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        _token_store[username] = data['access_token']
+                        return jsonify({"access_token": data['access_token']})
 
-            return jsonify({"message": "Could not get access token from server"}), response.status_code
+            return jsonify({"message": "Could not get access token from server"}), response.status
 
         except Exception as e:
             return jsonify({"message": f"Token request failed: {str(e)}"}), 500
