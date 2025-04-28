@@ -22,7 +22,6 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 import jwt
 import aiohttp
-import requests  # Add this import at the top of the file
 
 from os import environ
 
