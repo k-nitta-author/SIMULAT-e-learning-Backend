@@ -578,33 +578,65 @@ class UserResource():
     async def get_token():
         """Get or refresh Weavy access token"""
         try:
-            refresh = request.args.get('refresh') == "true"
-            username = session.get('user')
+            # Get bearer token from header
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({
+                    "message": "No bearer token provided",
+                    "status": "unauthorized"
+                }), 401
 
-            if not username:
-                return jsonify({"message": "No user in session"}), 401
+            # Decode JWT token to get username
+            token = auth_header.split(' ')[1]
+            try:
+                decoded = jwt.decode(token, APP.secret_key, algorithms=['HS256'])
+                username = decoded['user']
+            except jwt.ExpiredSignatureError:
+                return jsonify({
+                    "message": "Token expired",
+                    "status": "unauthorized"
+                }), 401
+            except jwt.InvalidTokenError:
+                return jsonify({
+                    "message": "Invalid token", 
+                    "status": "unauthorized"
+                }), 401
 
-            # Get user from database to validate existence
-            user = SESSION.query(table).filter(table.username == username).first()
-            if not user:
-                return jsonify({"message": "User not found"}), 404
+            # Check if refresh requested
+            refresh = request.args.get('refresh') == 'true'
 
+            # Return cached token if exists and refresh not requested
             if not refresh and username in _token_store:
-                return jsonify({"access_token": _token_store[username]})
+                return jsonify({
+                    "access_token": _token_store[username],
+                    "status": "success"
+                })
 
-            async with aiohttp.ClientSession() as http_session:
-                async with http_session.post(
+            # Request new token from Weavy
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
                     f"{WEAVY_URL}/api/users/{username}/tokens",
                     headers={'Authorization': f'Bearer {API_KEY}'}
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
                         _token_store[username] = data['access_token']
-                        return jsonify({"access_token": data['access_token']})
-                    return jsonify({"message": f"Weavy error: {response.status}"}), response.status
+                        return jsonify({
+                            "access_token": data['access_token'],
+                            "status": "success",
+                            "username": username  # Added username for debugging
+                        })
+                    return jsonify({
+                        "message": "Could not get access token from server",
+                        "status": "error",
+                        "username": username  # Added username for debugging
+                    }), response.status
 
         except Exception as e:
-            return jsonify({"message": f"Error processing token request: {str(e)}"}), 500
+            return jsonify({
+                "message": f"Token request failed: {str(e)}",
+                "status": "error"
+            }), 500
 
     # get top 10 students by progress score
     @APP.route('/user/top-students', methods=['GET'])
