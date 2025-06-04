@@ -341,9 +341,10 @@ class UserResource():
             return jsonify({"message": "User not found"}), 404
 
         u.email = data["email"]
-        u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
+        if "password" in data:
+            u.password = generate_password_hash(data["password"], method='pbkdf2:sha256')
         u.username = data["username"]
-        u.name_given= data["name_given"]
+        u.name_given = data["name_given"]
         u.name_last = data["name_last"]
 
         try:
