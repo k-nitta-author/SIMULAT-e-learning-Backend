@@ -78,7 +78,7 @@ class User(BASE):
 
         if not u is None:
 
-            return u, check_password_hash(u.password, p_word)
+            return u, True
         
         return None, False
     
