@@ -7,3 +7,4 @@ PyJwt
 flask_cors
 flask_sqlalchemy
 aiohttp
+requests
