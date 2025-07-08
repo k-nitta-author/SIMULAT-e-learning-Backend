@@ -31,6 +31,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from setup import APP
+import requests
+from flask import send_file
+from io import BytesIO
 
 # enable cors
 cors = CORS(APP, resources={r"/*": {"origins": "*"}})
@@ -82,6 +85,56 @@ badge_res = BadgeResource()
 term_res = TermResource()
 study_group = StudyGroupResource()
 bulletin_res = BulletinResource()
+
+SUPABASE_URL = environ.get("SUPABASE_URL")
+SUPABASE_KEY = environ.get("SUPABASE_KEY")
+SUPABASE_BUCKET = environ.get("SUPABASE_BUCKET", "uploads")  # default bucket name
+
+def supabase_headers():
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}"
+    }
+
+@APP.route('/files/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    file_data = file.read()
+    filename = file.filename
+    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
+    resp = requests.post(url, headers={**supabase_headers(), "Content-Type": "application/octet-stream"}, data=file_data)
+    if resp.status_code in (200, 201):
+        return jsonify({'message': 'File uploaded', 'filename': filename}), 201
+    return jsonify({'error': 'Upload failed', 'details': resp.text}), 500
+
+@APP.route('/files/<filename>', methods=['GET'])
+def download_file(filename):
+    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
+    resp = requests.get(url, headers=supabase_headers(), stream=True)
+    if resp.status_code == 200:
+        return send_file(BytesIO(resp.content), download_name=filename, as_attachment=True)
+    return jsonify({'error': 'File not found'}), 404
+
+@APP.route('/files', methods=['GET'])
+def list_files():
+    url = f"{SUPABASE_URL}/storage/v1/object/list/{SUPABASE_BUCKET}"
+    resp = requests.get(url, headers=supabase_headers())
+    if resp.status_code == 200:
+        files = [item['name'] for item in resp.json()]
+        return jsonify({'files': files})
+    return jsonify({'error': 'Could not list files', 'details': resp.text}), 500
+
+@APP.route('/files/delete/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
+    resp = requests.delete(url, headers=supabase_headers())
+    if resp.status_code == 200:
+        return jsonify({'message': 'File deleted'})
+    return jsonify({'error': 'Delete failed', 'details': resp.text}), 500
 
 
 if __name__ == '__main__':
